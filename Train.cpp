@@ -28,22 +28,18 @@ int main(int argc, char** argv)
         String trainFile = params("train");
         std::cout << "Train: " << trainFile << std::endl;
 
-
-        Dims dims =
-        SVMLightFileFeatureProvider::findDims(trainFile);
-
         double l0 = currentTimeSeconds();
-        SVMLightFileFeatureProvider loader(dims.width);
-        loader.open(trainFile);
-        std::vector<FeatureVector*> trainingSet = loader.load(trainFile);
+        SVMLightFileFeatureProvider reader;
+        
+        std::vector<FeatureVector*> trainingSet = reader.load(trainFile);
         double elapsed = currentTimeSeconds() - l0;
 
         std::vector<FeatureVector*> evalSet;
         String evalFile = params("eval");
         if (evalFile != "")
         {
-            loader.open(evalFile);
-            evalSet = loader.load(evalFile);
+            reader.open(evalFile);
+            evalSet = reader.load(evalFile);
         }
 
 
@@ -68,15 +64,17 @@ int main(int argc, char** argv)
         }
 
         double eta0 = valueOf<double>(params("eta0", "-1"));
-        std::cout << "Using eta0=" << eta0 << std::endl;
+        if (eta0 != -1)
+        {
+            std::cout << "Using eta0=" << eta0 << std::endl;
+        }
         double lambda = valueOf<double>(params("lambda", "1e-5"));
         std::cout << "Using lambda=" << lambda << std::endl;
         SGDLearner learner(lossFunction, lambda, eta0);
 
-
-        const FeatureVector* fv0 = trainingSet[0];
-
-        Model* model = learner.create(fv0->length());
+        int vSz = reader.getLargestVectorSeen();
+        std::cout << "Creating model with vector of size " << vSz << std::endl;
+        Model* model = learner.create(vSz);
         
         int epochs = valueOf<int>(params("epochs", "5"));
         double totalTrainingElapsed = 0.;

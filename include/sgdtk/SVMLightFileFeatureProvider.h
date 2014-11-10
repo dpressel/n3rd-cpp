@@ -35,8 +35,13 @@ class SVMLightFileFeatureProvider : public FeatureProvider
 {
     size_t maxFeatures;
     std::ifstream* ifile;
+    int largestVectorSeen;
 public:
 
+    int getLargestVectorSeen()
+    {
+        return largestVectorSeen;
+    }
     /**
      * If you want to know the dimensions of an SVM light file, you can call this method, and it will give back
      * the number of vectors (as the height), and required feature vector size as the width to encompass all examples.
@@ -53,8 +58,8 @@ public:
      *
      * @param maxFeatures The feature vector width.
      */
-    SVMLightFileFeatureProvider(size_t mx) :
-        maxFeatures(mx), ifile(NULL) {}
+    SVMLightFileFeatureProvider(size_t mx = 0) :
+        maxFeatures(mx), ifile(NULL), largestVectorSeen(0) {}
 
     virtual ~SVMLightFileFeatureProvider() {}
 

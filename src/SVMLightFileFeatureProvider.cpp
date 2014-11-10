@@ -8,6 +8,7 @@ Dims SVMLightFileFeatureProvider::findDims(String file)
 {
     std::ifstream ifile;
     ifile.open(file.c_str());
+    ifile.sync_with_stdio(false);
     if (!ifile.is_open())
     {
         throw Exception("File " + file + " was not opened!");
@@ -34,7 +35,7 @@ void SVMLightFileFeatureProvider::open(String file)
 {
     ifile = new std::ifstream;
     ifile->open(file.c_str());
-    
+    ifile->sync_with_stdio(false);
     if (! ifile->is_open())
     {
         throw Exception("File " + file + " was not opened!");
@@ -69,42 +70,57 @@ std::vector<FeatureVector*> SVMLightFileFeatureProvider::load(String file)
     //close();
     return fvs;
 }
-    
+
+
 FeatureVector* SVMLightFileFeatureProvider::next()
 {
-    if (! ifile->is_open())
+    if (!ifile->good() || ifile->eof())
     {
-        throw Exception("File was not opened!");
-    }
-    String line;
-    if (!std::getline(*ifile, line, '\n'))
-    {
-        ifile->close();
-        delete ifile;
         return NULL;
     }
-
-    int lastIdxTotal = maxFeatures - 1;
-    Offsets sv;
-
-    StringArray strings = split(line);
-    double label = valueOf<double>(strings[0]);
-
-    FeatureVector* fv = new FeatureVector(lastIdxTotal + 1, label);
-    for (int i = 1, sz = strings.size(); i < sz; ++i)
+    double y;
+    double value;
+    int lastIdxTotal = (int)maxFeatures - 1;
+    *ifile >> std::skipws >> y >> std::ws;
+    FeatureVector* fv = new FeatureVector(y);
+    
+    for(;;)
     {
-        StringArray tok = split(strings[i], ':');
-        int idx = valueOf<int>(tok[0]);
-        
-        if (idx > lastIdxTotal)
+        int c = ifile->get();
+        if (!ifile->good() || (c=='\n' || c=='\r'))
         {
+            break;
+        }
+        if (::isspace(c))
+            continue;
+        int idx;
+        ifile->unget();
+        *ifile >> std::skipws >> idx >> std::ws;
+        if (ifile->get() != ':')
+        {
+            ifile->unget();
+            ifile->setstate(std::ios::badbit);
+            throw Exception("Bad file");
+        }
+        
+        
+
+        *ifile >> std::skipws >> value;
+
+        largestVectorSeen = std::max<int>(largestVectorSeen, idx + 1);
+        if (lastIdxTotal > 0 && idx > lastIdxTotal)
+        {
+            std::cout << "Skipping index " << idx << std::endl;
             continue;
         }
-        double value = valueOf<double>(tok[1]);
+
+        if (!ifile->good())
+            throw Exception("Bad file");
         Offset offset(idx, value);
         fv->add(offset);
 
     }
+    
     return fv;
 
 }

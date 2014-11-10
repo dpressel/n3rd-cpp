@@ -7,7 +7,6 @@ namespace sgdtk
 class FeatureVector
 {
     Offsets rep;
-    size_t size;
     Number label;
     
 public:
@@ -15,10 +14,9 @@ public:
     /**
      * Constructor for feature vectors that are ground truth
      * @param y label
-     * @param size feature vector width
      */
-    FeatureVector(size_t sz, Number labelValue = 0.) :
-        size(sz), label(labelValue) {}
+    FeatureVector(Number labelValue = 0.) :
+        label(labelValue) {}
 
     ~FeatureVector() {}
 
@@ -59,7 +57,8 @@ public:
      */
     size_t length() const
     {
-        return size;
+        int sz = rep.size();
+        return sz == 0 ? 0: (rep[sz - 1].first + 1);
     }
 
 };

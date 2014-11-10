@@ -16,6 +16,7 @@ public:
 	FeatureProvider() {}
 	virtual ~FeatureProvider() {}
 
+	virtual int getLargestVectorSeen() = 0;
     /**
      * Get the next feature vector from the source
      * @return feature vector or null of end of stream reached
