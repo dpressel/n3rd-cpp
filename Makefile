@@ -4,7 +4,7 @@ I=./include
 L=./src
 CXX=g++
 OPT=
-OPTS=-O3
+OPTS=-O3 -funroll-loops -mfpmath=sse
 CXXFLAGS= ${OPTS} ${OPT} -Wall -I$I 
 LDFLAGS = -static-libstdc++ -static-libgcc
 LIBS = -lz -lm
