@@ -36,12 +36,13 @@ void SGDLearner::trainOneWithEta(LinearModel* lm, const FeatureVector* fv, doubl
     double d = lossFunction->dLoss(fx, y);
     double disp = -eta * d * wdiv;
 
-    const Offsets& sv = fv->getNonZeroOffsets();
+    //const Offsets& sv = fv->getNonZeroOffsets();
 
-    for (Offsets::const_iterator p = sv.begin(); p != sv.end(); ++p)
-    {
-        lm->addInplace(p->first, p->second * disp);
-    }
+    lm->add(fv, disp);
+    //for (Offsets::const_iterator p = sv.begin(); p != sv.end(); ++p)
+    //{
+    //    lm->addInplace(p->first, p->second * disp);
+    //}
   
     double etab = eta * 0.01;
     double wbias = lm->getWbias();

@@ -49,11 +49,32 @@ public:
      * @throws Exception
      */
     void save(String file);
+    void add(const FeatureVector* fv, double disp)
+    {
+         const Offsets& sv = fv->getNonZeroOffsets();
+         for (Offsets::const_iterator p = sv.begin(); p != sv.end(); ++p)
+         {
+                 weights[p->first] += p->second * disp;
+         }
+     }
 
-    double predict(const FeatureVector* fv) const;
-    
-    Model* prototype() const;
+    double predict(const FeatureVector* fv) const
+    {
+        double dot = 0.;
+        const Offsets& sv = fv->getNonZeroOffsets();
 
+        for (Offsets::const_iterator p = sv.begin(); p != sv.end(); ++p)
+        {
+            dot += this->weights[p->first] * p->second;
+        }
+        return dot / wdiv + wbias;
+    }
+
+    Model* prototype() const
+    {
+        return new LinearModel(*this);
+    }
+ 
     double getWdiv() const
     {
         return wdiv;
@@ -77,8 +98,6 @@ public:
     double mag() const;
 
     void scaleInplace(double scalar);
-
-    void addInplace(int i, double update);
 
 };
 }
