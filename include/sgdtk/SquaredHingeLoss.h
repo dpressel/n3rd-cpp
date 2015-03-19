@@ -7,15 +7,15 @@ namespace sgdtk
 
 
 /**
- * Square loss
+ * Squared Hinge loss
  *
  * @author dpressel
  */
-class SquareLoss : public Loss
+class SquaredHingeLoss : public Loss
 {
 public:
-    SquareLoss() {}
-    ~SquareLoss() {}
+    SquaredHingeLoss() {}
+    ~SquaredHingeLoss() {}
 
     /**
      * Square loss
@@ -26,12 +26,16 @@ public:
     double loss(double p, double y) const
     {
         double z = p * y;
+        if (z > 1.0)
+            return 0.0;
         double d = 1 - z;
         return 0.5 * d * d;
     }
     double dLoss(double p, double y) const
     {
         double z = p * y;
+        if (z > 1.0)
+            return 0.0;
         double d = 1 - z;
         return -y * d;
     }
