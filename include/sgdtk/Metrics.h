@@ -3,113 +3,116 @@
 
 namespace sgdtk
 {
-    
-class Metrics
-{
-public:
-    double cost;
-    double totalLoss;
-    double numExamplesSeen;
-    double numEventsSeen;
-    double totalError;
 
-    Metrics()
+    class Metrics
     {
-        clear();
-    }
-    ~Metrics()
-    {
+    public:
+        double cost;
+        double totalLoss;
+        double numExamplesSeen;
+        double numEventsSeen;
+        double totalError;
 
-    }
-    void clear()
-    {
-        cost = totalLoss = numEventsSeen = numExamplesSeen = totalError = 0.;
-    }
-    double getCost() const
-    {
-        return cost;
-    }
+        Metrics()
+        {
+            clear();
+        }
 
-    void setCost(double cost)
-    {
-        this->cost = cost;
-    }
+        ~Metrics()
+        {
 
-    double getTotalLoss() const
-    {
-        return totalLoss;
-    }
+        }
 
-    void setTotalLoss(double totalLoss)
-    {
-        this->totalLoss = totalLoss;
-    }
+        void clear()
+        {
+            cost = totalLoss = numEventsSeen = numExamplesSeen = totalError = 0.;
+        }
 
-    double getNumExamplesSeen() const
-    {
-        return numExamplesSeen;
-    }
+        double getCost() const
+        {
+            return cost;
+        }
 
-    void setNumExamplesSeen(double numExamplesSeen)
-    {
-        this->numExamplesSeen = numExamplesSeen;
-    }
+        void setCost(double cost)
+        {
+            this->cost = cost;
+        }
 
-    void addToTotalExamples(double length)
-    {
-        numExamplesSeen += length;
-    }
+        double getTotalLoss() const
+        {
+            return totalLoss;
+        }
 
-    double getTotalError() const
-    {
-        return totalError;
-    }
+        void setTotalLoss(double totalLoss)
+        {
+            this->totalLoss = totalLoss;
+        }
 
-    void setTotalError(double totalError)
-    {
-        this->totalError = totalError;
-    }
+        double getNumExamplesSeen() const
+        {
+            return numExamplesSeen;
+        }
 
-    void addToTotalError(double error)
-    {
-        totalError += error;
-    }
+        void setNumExamplesSeen(double numExamplesSeen)
+        {
+            this->numExamplesSeen = numExamplesSeen;
+        }
 
-    void add(double loss, double error)
-    {
-        this->numExamplesSeen += 1.;
-        this->numEventsSeen += 1.;
+        void addToTotalExamples(double length)
+        {
+            numExamplesSeen += length;
+        }
 
-        this->totalLoss += loss;
-        this->totalError += error;
-    }
+        double getTotalError() const
+        {
+            return totalError;
+        }
 
-    double getLoss() const
-    {
-        double seen = numExamplesSeen > 0. ? numExamplesSeen : 1.;
-        return totalLoss / seen;
-    }
+        void setTotalError(double totalError)
+        {
+            this->totalError = totalError;
+        }
 
-    double getError() const
-    {
-        double seen = numEventsSeen > 0. ? numEventsSeen : 1.;
-        return totalError / seen;
-    }
+        void addToTotalError(double error)
+        {
+            totalError += error;
+        }
 
-    double getNumEventsSeen() const
-    {
-        return numEventsSeen;
-    }
+        void add(double loss, double error)
+        {
+            this->numExamplesSeen += 1.;
+            this->numEventsSeen += 1.;
 
-    void setNumEventsSeen(double numEventsSeen)
-    {
-        this->numEventsSeen = numEventsSeen;
-    }
+            this->totalLoss += loss;
+            this->totalError += error;
+        }
 
-    void addToTotalEvents(double length)
-    {
-        numEventsSeen += length;
-    }
-};
+        double getLoss() const
+        {
+            double seen = numExamplesSeen > 0. ? numExamplesSeen : 1.;
+            return totalLoss / seen;
+        }
+
+        double getError() const
+        {
+            double seen = numEventsSeen > 0. ? numEventsSeen : 1.;
+            return totalError / seen;
+        }
+
+        double getNumEventsSeen() const
+        {
+            return numEventsSeen;
+        }
+
+        void setNumEventsSeen(double numEventsSeen)
+        {
+            this->numEventsSeen = numEventsSeen;
+        }
+
+        void addToTotalEvents(double length)
+        {
+            numEventsSeen += length;
+        }
+    };
 }
 #endif

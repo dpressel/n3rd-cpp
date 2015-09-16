@@ -3,13 +3,18 @@
 
 namespace sgdtk
 {
-class Loss
-{
-public:
-	Loss() {}
-	virtual ~Loss() {}
-	virtual double loss(double p, double y) const = 0;
-	virtual double dLoss(double p, double y) const = 0;
-};
+    class Loss
+    {
+    public:
+        Loss()
+        { }
+
+        virtual ~Loss()
+        { }
+
+        virtual double loss(double p, double y) const = 0;
+
+        virtual double dLoss(double p, double y) const = 0;
+    };
 }
 #endif

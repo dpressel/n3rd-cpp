@@ -1,6 +1,7 @@
 #ifndef __SGDTK_EXCEPTION_H__
 #define __SGDTK_EXCEPTION_H__
 
+
 #include "sgdtk/Types.h"
 namespace sgdtk
 {

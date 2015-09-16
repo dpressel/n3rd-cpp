@@ -17,9 +17,12 @@
 #include "sgdtk/Params.h"
 #include "sgdtk/SGDLearner.h"
 #include "sgdtk/SquaredLoss.h"
- #include "sgdtk/SquaredHingeLoss.h"
+#include "sgdtk/SquaredHingeLoss.h"
 #include "sgdtk/SVMLightFileFeatureProvider.h"
 #include "sgdtk/Types.h"
+#include "sgdtk/VectorN.h"
+#include "sgdtk/DenseVectorN.h"
+#include "sgdtk/SparseVectorN.h"
 
 
 #endif

@@ -2,23 +2,24 @@
 #define __SGDTK_PARAMS_H__
 
 #include "sgdtk/Types.h"
+
 namespace sgdtk
 {
 
 
-typedef std::map<String, String> ArgMap;
+    typedef std::map<String, String> ArgMap;
 
-class Params
-{
-	
-	ArgMap args;
+    class Params
+    {
 
-	public:
-	Params(int argc, char** argv);
+        ArgMap args;
 
-	String operator()(String arg, String def = "") const;
+    public:
+        Params(int argc, char **argv);
 
-};
+        String operator()(String arg, String def = "") const;
+
+    };
 
 }
 #endif

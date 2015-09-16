@@ -3,6 +3,8 @@
 
 #include "sgdtk/Model.h"
 #include "sgdtk/Types.h"
+#include "sgdtk/VectorN.h"
+#include "sgdtk/DenseVectorN.h"
 
 namespace sgdtk
 {
@@ -12,94 +14,129 @@ namespace sgdtk
  *
  * @author dpressel
  */
-class LinearModel : public Model
-{
-    std::vector<double> weights;
-    
-    double wdiv;
- 
-    double wbias;
-
-    LinearModel(const LinearModel& lm)
+    class LinearModel : public Model
     {
-        weights = lm.weights;
-        wdiv = lm.wdiv;
-        wbias = lm.wbias;
-    }
-public:
+    protected:
+        DenseVectorN weights;
 
-    LinearModel(int wl, double wd, double wb)
-        : wdiv(wd), wbias(wb) 
-    {
-        weights.resize(wl, 0);
-    }
-    LinearModel() {}
-    ~LinearModel() {}
+        double wdiv;
 
-    /**
-     * Load the model from the stream
-     * @param file Model file to load from
-     * @throws Exception
-     */
-    void load(String file);
+        double wbias;
 
-    /**
-     * Save the model to a stream
-     * @param file model to save to
-     * @throws Exception
-     */
-    void save(String file);
-    void add(const FeatureVector* fv, double disp)
-    {
-         const Offsets& sv = fv->getNonZeroOffsets();
-         for (Offsets::const_iterator p = sv.begin(); p != sv.end(); ++p)
-         {
-                 weights[p->first] += p->second * disp;
-         }
-     }
-
-    double predict(const FeatureVector* fv) const
-    {
-        double dot = 0.;
-        const Offsets& sv = fv->getNonZeroOffsets();
-
-        for (Offsets::const_iterator p = sv.begin(); p != sv.end(); ++p)
+        LinearModel(const LinearModel &lm)
         {
-            dot += this->weights[p->first] * p->second;
+            weights = lm.weights;
+            wdiv = lm.wdiv;
+            wbias = lm.wbias;
         }
-        return dot / wdiv + wbias;
-    }
 
-    Model* prototype() const
-    {
-        return new LinearModel(*this);
-    }
- 
-    double getWdiv() const
-    {
-        return wdiv;
-    }
+    public:
 
-    void setWdiv(double wdiv)
-    {
-        this->wdiv = wdiv;
-    }
+        LinearModel(long wl, double wd = 1.0, double wb = 0.0)
+                : wdiv(wd), wbias(wb)
+        {
+            weights.resize(wl);
+        }
 
-    double getWbias() const
-    {
-        return wbias;
-    }
+        LinearModel()
+        { }
 
-    void setWbias(double wbias)
-    {
-        this->wbias = wbias;
-    }
+        virtual ~LinearModel()
+        {
+        }
 
-    double mag() const;
+        /**
+         * Load the model from the stream
+         * @param file Model file to load from
+         * @throws Exception
+         */
+        void load(String file);
 
-    void scaleInplace(double scalar);
+        /**
+         * Save the model to a stream
+         * @param file model to save to
+         * @throws Exception
+         */
+        void save(String file);
 
-};
+        void add(const FeatureVector *fv, double disp)
+        {
+            const Offsets &sv = fv->getNonZeroOffsets();
+            for (Offsets::const_iterator p = sv.begin(); p != sv.end(); ++p)
+            {
+                weights.x[p->first] += p->second * disp;
+            }
+        }
+
+        double predict(const FeatureVector *fv) const;
+
+        Model *prototype() const
+        {
+            return new LinearModel(*this);
+        }
+
+        double getWdiv() const
+        {
+            return wdiv;
+        }
+
+        void setWdiv(double wdiv)
+        {
+            this->wdiv = wdiv;
+        }
+
+        double getWbias() const
+        {
+            return wbias;
+        }
+
+        void setWbias(double wbias)
+        {
+            this->wbias = wbias;
+        }
+
+        double mag() const;
+
+        void scaleInplace(double scalar);
+
+        virtual void scaleWeights(double eta, double lambda)
+        {
+            wdiv /= (1 - eta * lambda);
+
+            if (wdiv > 1e5)
+            {
+                double sf = 1.0 / wdiv;
+                weights.scale(sf);
+
+                wdiv = 1.;
+
+
+            }
+        }
+
+        void updateWeights(const VectorN& vectorN, double eta, double lambda, double dLoss, double y)
+        {
+            scaleWeights(eta, lambda);
+
+            for (Offset offset : vectorN.getNonZeroOffsets())
+            {
+                double grad = dLoss * offset.second;
+                double thisEta = perWeightUpdate(offset.first, grad, eta);
+                weights.x[offset.first] += offset.second * -thisEta * dLoss * wdiv;
+            }
+            // This is referenced on Leon Bottou's SGD page
+            double etab = eta * 0.01;
+            wbias += -etab * dLoss;
+        }
+
+        virtual double perWeightUpdate(int index, double grad, double eta)
+        {
+            return eta;
+        }
+
+
+
+    };
 }
 
 #endif

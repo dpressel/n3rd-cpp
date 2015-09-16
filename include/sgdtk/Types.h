@@ -25,27 +25,28 @@ namespace sgdtk
     inline double currentTimeSeconds()
     {
         struct timeval time;
-        if (gettimeofday(&time,NULL))
+        if (gettimeofday(&time, NULL))
         {
             return -1000000;
         }
-        return (double)time.tv_sec + (double)time.tv_usec * .000001;
+        return (double) time.tv_sec + (double) time.tv_usec * .000001;
     }
 
-    inline StringArray split(const String& s, char delim = ' ')
+    inline StringArray split(const String &s, char delim = ' ')
     {
         StringArray elems;
         std::stringstream ss(s);
         String item;
         while (std::getline(ss, item, delim))
         {
-            
+
             elems.push_back(item);
         }
         return elems;
     }
 
-    template <typename T> T valueOf(String s)
+    template<typename T>
+    T valueOf(String s)
     {
         std::istringstream iss(s);
         T t;
@@ -53,7 +54,9 @@ namespace sgdtk
         return t;
 
     }
-    template <typename T> String toString(const T& t)
+
+    template<typename T>
+    String toString(const T &t)
     {
         std::ostringstream oss;
         oss << t;

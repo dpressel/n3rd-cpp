@@ -2,66 +2,84 @@
 #define __SGDTK_FEATURE_VECTOR_H__
 
 #include "sgdtk/Types.h"
+#include "sgdtk/VectorN.h"
+#include "sgdtk/SparseVectorN.h"
+
 namespace sgdtk
 {
-class FeatureVector
-{
-    Offsets rep;
-    Number label;
-    
-public:
-
-    /**
-     * Constructor for feature vectors that are ground truth
-     * @param y label
-     */
-    FeatureVector(Number labelValue = 0.) :
-        label(labelValue) {}
-
-    ~FeatureVector() {}
-
-    /**
-     * Add a new offset to the feature vector (must not exceed size)
-     * @param offset
-     */
-    void add(Offset offset)
+    class FeatureVector
     {
-        rep.push_back(offset);
-    }
+        VectorN *x;
+        double y;
 
-    /**
-     * Get the label
-     * @return return label
-     */
-    Number getY() const
-    {
-        return label;
-    }
-    void setY(double label)
-    {
-        this->label = label;
-    }
+    public:
 
-    /**
-     * Get all non-zero values and their indices
-     * @return
-     */
-    const Offsets& getNonZeroOffsets() const
-    {
-        return rep;
-    }
+        const double UNLABELED = 0x0.0000000000001P-1022;
 
-    /**
-     * Length of feature vector
-     * @return
-     */
-    size_t length() const
-    {
-        int sz = rep.size();
-        return sz == 0 ? 0: (rep[sz - 1].first + 1);
-    }
+        /**
+         * Constructor for feature vectors that are ground truth
+         * @param y label
+         */
+        FeatureVector(Number labelValue, VectorN *vectorN = NULL) :
+                y(labelValue)
+        {
 
-};
+            x = (vectorN == NULL) ? (new SparseVectorN()): (vectorN);
+        }
+
+
+        ~FeatureVector()
+        {
+            delete x;
+        }
+
+        /**
+         * Add a new offset to the feature vector (must not exceed size)
+         * @param offset
+         */
+        void add(Offset offset)
+        {
+            x->add(offset);
+        }
+
+        /**
+         * Get the label
+         * @return return label
+         */
+        Number getY() const
+        {
+            return y;
+        }
+
+        const VectorN& getX() const
+        {
+            return *x;
+        }
+
+        void setY(double label)
+        {
+            this->y = label;
+        }
+
+        /**
+         * Get all non-zero values and their indices
+         * @return
+         */
+        Offsets getNonZeroOffsets() const
+        {
+            return x->getNonZeroOffsets();
+        }
+
+        /**
+         * Length of feature vector
+         * @return
+         */
+        size_t length() const
+        {
+            return x->length();
+        }
+
+    };
 
 }
 #endif

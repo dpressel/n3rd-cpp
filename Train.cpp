@@ -52,10 +52,15 @@ int main(int argc, char** argv)
             std::cout << "Using log loss" << std::endl;
             lossFunction = new LogLoss();
         }
-        else if (loss == "square")
+        else if (loss == "sqh")
         {
-            std::cout << "Using square loss" << std::endl;
-            lossFunction = new SquareLoss();
+            std::cout << "Using squared hinge loss" << std::endl;
+            lossFunction = new SquaredHingeLoss();
+        }
+        else if (loss == "sq")
+        {
+            std::cout << "Using squared loss" << std::endl;
+            lossFunction = new SquaredLoss();
         }
         else
         {
@@ -70,11 +75,16 @@ int main(int argc, char** argv)
         }
         double lambda = valueOf<double>(params("lambda", "1e-5"));
         std::cout << "Using lambda=" << lambda << std::endl;
-        SGDLearner learner(lossFunction, lambda, eta0);
 
-        int vSz = reader.getLargestVectorSeen();
+        String type = params("optim", "sgd");
+
+        LinearModelFactory mf(type);
+
+        SGDLearner learner(lossFunction, lambda, eta0, &mf);
+
+        long vSz = (long)reader.getLargestVectorSeen();
         std::cout << "Creating model with vector of size " << vSz << std::endl;
-        Model* model = learner.create(vSz);
+        Model* model = learner.create((void*)vSz);
         
         int epochs = valueOf<int>(params("epochs", "5"));
         double totalTrainingElapsed = 0.;

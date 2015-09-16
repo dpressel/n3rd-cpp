@@ -26,7 +26,7 @@ Dims SVMLightFileFeatureProvider::findDims(String file)
         ++n;
     }
 
-    ifile.close();  
+    ifile.close();
     Dims dims(lastIdxTotal + 1, n);
     return dims;
 }
@@ -36,14 +36,14 @@ void SVMLightFileFeatureProvider::open(String file)
     ifile = new std::ifstream;
     ifile->open(file.c_str());
     ifile->sync_with_stdio(false);
-    if (! ifile->is_open())
+    if (!ifile->is_open())
     {
         throw Exception("File " + file + " was not opened!");
     }
 }
 
 void SVMLightFileFeatureProvider::close()
-{ 
+{
     if (ifile)
     {
         delete ifile;
@@ -52,11 +52,11 @@ void SVMLightFileFeatureProvider::close()
     std::cout << "done deleting" << std::endl;
 }
 
-std::vector<FeatureVector*> SVMLightFileFeatureProvider::load(String file)
+std::vector<FeatureVector *> SVMLightFileFeatureProvider::load(String file)
 {
-    std::vector<FeatureVector*> fvs;
+    std::vector<FeatureVector *> fvs;
     open(file);
-    FeatureVector* fv;
+    FeatureVector *fv;
     //int readSoFar = 0;
     while ((fv = next()) != NULL)
     {
@@ -66,13 +66,13 @@ std::vector<FeatureVector*> SVMLightFileFeatureProvider::load(String file)
         //  break;
 
     }
-    
+
     //close();
     return fvs;
 }
 
 
-FeatureVector* SVMLightFileFeatureProvider::next()
+FeatureVector *SVMLightFileFeatureProvider::next()
 {
     if (!ifile->good() || ifile->eof())
     {
@@ -80,14 +80,14 @@ FeatureVector* SVMLightFileFeatureProvider::next()
     }
     double y;
     double value;
-    int lastIdxTotal = (int)maxFeatures - 1;
+    int lastIdxTotal = (int) maxFeatures - 1;
     *ifile >> std::skipws >> y >> std::ws;
-    FeatureVector* fv = new FeatureVector(y);
-    
-    for(;;)
+    FeatureVector *fv = new FeatureVector(y);
+
+    for (; ;)
     {
         int c = ifile->get();
-        if (!ifile->good() || (c=='\n' || c=='\r'))
+        if (!ifile->good() || (c == '\n' || c == '\r'))
         {
             break;
         }
@@ -102,8 +102,7 @@ FeatureVector* SVMLightFileFeatureProvider::next()
             ifile->setstate(std::ios::badbit);
             throw Exception("Bad file");
         }
-        
-        
+
 
         *ifile >> std::skipws >> value;
 
@@ -120,7 +119,7 @@ FeatureVector* SVMLightFileFeatureProvider::next()
         fv->add(offset);
 
     }
-    
+
     return fv;
 
 }

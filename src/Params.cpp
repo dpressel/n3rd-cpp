@@ -1,7 +1,8 @@
 #include "sgdtk/Params.h"
 
 using namespace sgdtk;
-Params::Params(int argc, char** argv)
+
+Params::Params(int argc, char **argv)
 {
 
     for (int i = 1; i < argc; ++i)

@@ -1,25 +1,28 @@
 #include "sgdtk/SGDLearner.h"
 #include <iostream>
+
 using namespace sgdtk;
 
-Model* SGDLearner::create(int wlength)
+Model *SGDLearner::create(void *p)
 {
-    numSeenTotal = 0;
-    LinearModel* lm = new LinearModel(wlength, 1., 0.);
-    return lm;
+    this->learningRateSchedule->reset(eta0, lambda);
+    return this->modelFactory->newInstance(p);
 }
 
-void SGDLearner::trainOne(Model* model, const FeatureVector* fv)
+void SGDLearner::trainOne(Model *model, const FeatureVector *fv)
 {
-    LinearModel* lm = (LinearModel*)model;
-    double eta = eta0 / (1 + lambda * eta0 * numSeenTotal);
+    LinearModel *lm = (LinearModel *) model;
+    double eta = learningRateSchedule->update();
+   //double eta = eta0 / (1 + lambda * eta0 * numSeenTotal);
 
-    trainOneWithEta(lm, fv, eta);
+    double y = fv->getY();
+    double fx = lm->predict(fv);
+    double dLoss = lossFunction->dLoss(fx, y);
 
-    ++numSeenTotal;
+    lm->updateWeights(fv->getX(), eta, lambda, dLoss, y);
 }
-
-void SGDLearner::trainOneWithEta(LinearModel* lm, const FeatureVector* fv, double eta)
+/*
+void SGDLearner::trainOneWithEta(LinearModel *lm, const FeatureVector *fv, double eta)
 {
     double y = fv->getY();
     double fx = lm->predict(fv);
@@ -43,15 +46,17 @@ void SGDLearner::trainOneWithEta(LinearModel* lm, const FeatureVector* fv, doubl
     //{
     //    lm->addInplace(p->first, p->second * disp);
     //}
-  
+
     double etab = eta * 0.01;
     double wbias = lm->getWbias();
 
     wbias += -etab * d;
     lm->setWbias(wbias);
- 
+
 }
-void SGDLearner::preprocess(Model* model, const std::vector<FeatureVector*>& sample)
+*/
+
+void SGDLearner::preprocess(Model *model, const std::vector<FeatureVector *> &sample)
 {
     double lowEta = LOW_ETA_0;
     double lowCost = evalEta(model, sample, lowEta);
@@ -82,38 +87,43 @@ void SGDLearner::preprocess(Model* model, const std::vector<FeatureVector*>& sam
 }
 
 
-double SGDLearner::evalEta(Model* model, const std::vector<FeatureVector*>& sample, double eta)
+double SGDLearner::evalEta(Model *model, const std::vector<FeatureVector *> &sample, double eta)
 {
-    LinearModel* clone = (LinearModel*)model->prototype();
+    LinearModel *clone = (LinearModel *) model->prototype();
 
     for (size_t i = 0, sz = sample.size(); i < sz; ++i)
     {
-        trainOneWithEta(clone, sample[i], eta);
+        FeatureVector* fv = sample[i];
+        double y = fv->getY();
+        double fx = clone->predict(fv);
+        double dLoss = lossFunction->dLoss(fx, y);
+        clone->updateWeights(fv->getX(), eta, lambda, dLoss, y);
+
     }
-    
+
     Metrics metrics;
     eval(clone, sample, metrics);
     return metrics.getCost();
 }
 
-Model* SGDLearner::trainEpoch(Model* model,
-        const std::vector<FeatureVector*>& trainingExamples)
+Model *SGDLearner::trainEpoch(Model *model,
+                              const std::vector<FeatureVector *> &trainingExamples)
 {
     if (eta0 <= 0)
     {
-        
+
         // get samples from trainingExamples
         size_t nSamples = std::min<size_t>(1000, trainingExamples.size());
-        
-        std::vector<FeatureVector*> samples(nSamples);
+
+        std::vector<FeatureVector *> samples(nSamples);
         for (size_t i = 0; i < nSamples; ++i)
         {
             samples[i] = trainingExamples[i];
         }
         preprocess(model, samples);
     }
-    
-    
+
+
     for (size_t i = 0, sz = trainingExamples.size(); i < sz; ++i)
     {
         //double eta = eta0 / (1 + lambda * eta0 * numSeenTotal);
@@ -121,14 +131,14 @@ Model* SGDLearner::trainEpoch(Model* model,
         //++numSeenTotal;
     }
 
-    LinearModel* lm = (LinearModel*)model;
-    
-    std::cout << "wNorm="  << lm->mag() << std::endl;
+    LinearModel *lm = (LinearModel *) model;
+
+    std::cout << "wNorm=" << lm->mag() << std::endl;
     return model;
 
 }
 
-double SGDLearner::evalOne(Model* model, const FeatureVector* fv, Metrics& metrics)
+double SGDLearner::evalOne(Model *model, const FeatureVector *fv, Metrics &metrics)
 {
     double y = fv->getY();
     double fx = model->predict(fv);
@@ -138,20 +148,20 @@ double SGDLearner::evalOne(Model* model, const FeatureVector* fv, Metrics& metri
     return fx;
 }
 
-void SGDLearner::eval(Model* model,
-        const std::vector<FeatureVector*>& testingExamples,
-        Metrics& metrics)
+void SGDLearner::eval(Model *model,
+                      const std::vector<FeatureVector *> &testingExamples,
+                      Metrics &metrics)
 {
     int seen = testingExamples.size();
 
     for (int i = 0; i < seen; ++i)
     {
-        const FeatureVector* fv = testingExamples[i];
+        const FeatureVector *fv = testingExamples[i];
         evalOne(model, fv, metrics);
 
     }
 
-    LinearModel* lm = (LinearModel*)model;
+    LinearModel *lm = (LinearModel *) model;
     double normW = lm->mag();
     double cost = metrics.getLoss() + 0.5 * lambda * normW;
     metrics.setCost(cost);
