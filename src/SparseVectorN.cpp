@@ -41,7 +41,7 @@ int  SparseVectorN::realIndex(int i) const
 {
     for (int j = 0, sz = offsets.size(); j < sz; ++j)
     {
-        Offset offset = offsets[j];
+        auto offset = offsets[j];
         if (offset.first > i)
         {
             return -1;
@@ -85,7 +85,7 @@ void SparseVectorN::organize() {
 
 double SparseVectorN::dot(const VectorN &vec)
 {
-    double acc = 0.;
+    auto acc = 0.;
 
     Offsets offsets = getNonZeroOffsets();
 
@@ -98,7 +98,7 @@ double SparseVectorN::dot(const VectorN &vec)
 
 void SparseVectorN::from(const VectorN& v)
 {
-    Offsets voff = v.getNonZeroOffsets();
+    auto voff = v.getNonZeroOffsets();
     offsets = voff;
 
 }

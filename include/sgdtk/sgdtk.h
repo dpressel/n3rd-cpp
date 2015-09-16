@@ -23,6 +23,11 @@
 #include "sgdtk/VectorN.h"
 #include "sgdtk/DenseVectorN.h"
 #include "sgdtk/SparseVectorN.h"
-
+#include "sgdtk/ModelFactory.h"
+#include "sgdtk/LinearModelFactory.h"
+#include "sgdtk/LearningRateSchedule.h"
+#include "sgdtk/RobbinsMonroUpdateSchedule.h"
+#include "sgdtk/FixedLearningRate.h"
+#include "sgdtk/ConsumerProducerQueue.h"
 
 #endif

@@ -29,7 +29,7 @@ namespace sgdtk
          */
         double loss(double p, double y) const
         {
-            double d = p - y;
+            auto d = p - y;
             return 0.5 * d * d;
         }
 

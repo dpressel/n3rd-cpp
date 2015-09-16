@@ -89,14 +89,14 @@ void SGDLearner::preprocess(Model *model, const std::vector<FeatureVector *> &sa
 
 double SGDLearner::evalEta(Model *model, const std::vector<FeatureVector *> &sample, double eta)
 {
-    LinearModel *clone = (LinearModel *) model->prototype();
+    auto *clone = (LinearModel *) model->prototype();
 
     for (size_t i = 0, sz = sample.size(); i < sz; ++i)
     {
-        FeatureVector* fv = sample[i];
-        double y = fv->getY();
-        double fx = clone->predict(fv);
-        double dLoss = lossFunction->dLoss(fx, y);
+        const auto* fv = sample[i];
+        auto y = fv->getY();
+        auto fx = clone->predict(fv);
+        auto dLoss = lossFunction->dLoss(fx, y);
         clone->updateWeights(fv->getX(), eta, lambda, dLoss, y);
 
     }
@@ -131,7 +131,7 @@ Model *SGDLearner::trainEpoch(Model *model,
         //++numSeenTotal;
     }
 
-    LinearModel *lm = (LinearModel *) model;
+    auto *lm = (LinearModel *) model;
 
     std::cout << "wNorm=" << lm->mag() << std::endl;
     return model;
@@ -140,10 +140,10 @@ Model *SGDLearner::trainEpoch(Model *model,
 
 double SGDLearner::evalOne(Model *model, const FeatureVector *fv, Metrics &metrics)
 {
-    double y = fv->getY();
-    double fx = model->predict(fv);
-    double loss = lossFunction->loss(fx, y);
-    double error = (fx * y <= 0) ? 1 : 0;
+    auto y = fv->getY();
+    auto fx = model->predict(fv);
+    auto loss = lossFunction->loss(fx, y);
+    auto error = (fx * y <= 0) ? 1 : 0;
     metrics.add(loss, error);
     return fx;
 }
@@ -156,13 +156,13 @@ void SGDLearner::eval(Model *model,
 
     for (int i = 0; i < seen; ++i)
     {
-        const FeatureVector *fv = testingExamples[i];
+        const auto *fv = testingExamples[i];
         evalOne(model, fv, metrics);
 
     }
 
-    LinearModel *lm = (LinearModel *) model;
-    double normW = lm->mag();
-    double cost = metrics.getLoss() + 0.5 * lambda * normW;
+    auto *lm = (LinearModel *) model;
+    auto normW = lm->mag();
+    auto cost = metrics.getLoss() + 0.5 * lambda * normW;
     metrics.setCost(cost);
 }

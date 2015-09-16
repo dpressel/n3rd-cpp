@@ -29,19 +29,19 @@ namespace sgdtk
          */
         double loss(double p, double y) const
         {
-            double z = p * y;
+            auto z = p * y;
             if (z > 1.0)
                 return 0.0;
-            double d = 1 - z;
+            auto d = 1 - z;
             return 0.5 * d * d;
         }
 
         double dLoss(double p, double y) const
         {
-            double z = p * y;
+            auto z = p * y;
             if (z > 1.0)
                 return 0.0;
-            double d = 1 - z;
+            auto d = 1 - z;
             return -y * d;
         }
     };

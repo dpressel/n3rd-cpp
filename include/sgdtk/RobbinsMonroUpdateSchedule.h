@@ -29,7 +29,7 @@ public:
 
     double update()
     {
-        double eta = eta0 / (1 + lambda * eta0 * numSeenTotal);
+        auto eta = eta0 / (1 + lambda * eta0 * numSeenTotal);
         ++numSeenTotal;
         return eta;
     }

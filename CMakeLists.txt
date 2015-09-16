@@ -29,7 +29,15 @@ set(SOURCE_FILES
     src/SGDLearner.cpp
     src/SVMLightFileFeatureProvider.cpp
     src/DenseVectorN.cpp
-    src/SparseVectorN.cpp
-    Train.cpp)
+    src/SparseVectorN.cpp)
 
-add_executable(sgdtk_cpp ${SOURCE_FILES} include/sgdtk/DenseVectorN.h include/sgdtk/ModelFactory.h include/sgdtk/RobbinsMonroUpdateSchedule.h include/sgdtk/FixedLearningRate.h)
+
+add_library(sgdtk SHARED ${SOURCE_FILES} include/sgdtk/DenseVectorN.h include/sgdtk/ModelFactory.h include/sgdtk/RobbinsMonroUpdateSchedule.h include/sgdtk/FixedLearningRate.h include/sgdtk/ConsumerProducerQueue.h)
+
+add_executable(Train Train.cpp)
+add_dependencies(Train sgdtk)
+target_link_libraries(Train -L. sgdtk)
+
+#add_executable(TestCP TestCP.cpp)
+#add_dependencies(TestCP sgdtk)
+#target_link_libraries(TestCP -L. sgdtk)

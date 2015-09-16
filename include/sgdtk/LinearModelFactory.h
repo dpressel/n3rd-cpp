@@ -20,7 +20,7 @@ namespace sgdtk
 
         virtual Model* newInstance(void* p) const throw(Exception)
         {
-            long wlength = (long)p;
+            auto wlength = (long)p;
             return (type == "adagrad") ? (new AdagradLinearModel(wlength)): (new LinearModel(wlength));
         }
 

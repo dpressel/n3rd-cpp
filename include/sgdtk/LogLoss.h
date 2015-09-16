@@ -29,7 +29,7 @@ namespace sgdtk
          */
         double loss(double p, double y) const
         {
-            double z = p * y;
+            auto z = p * y;
             return z > 18 ? std::exp(-z) : z < -18 ? -z : std::log(1 + std::exp(-z));
         }
 
@@ -41,7 +41,7 @@ namespace sgdtk
          */
         double dLoss(double p, double y) const
         {
-            double z = p * y;
+            auto z = p * y;
             return z > 18 ? -y * std::exp(-z) : z < -18 ? -y : -y / (1 + std::exp(z));
         }
 

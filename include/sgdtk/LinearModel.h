@@ -61,10 +61,10 @@ namespace sgdtk
 
         void add(const FeatureVector *fv, double disp)
         {
-            const Offsets &sv = fv->getNonZeroOffsets();
-            for (Offsets::const_iterator p = sv.begin(); p != sv.end(); ++p)
+            const auto &sv = fv->getNonZeroOffsets();
+            for (auto p : sv)
             {
-                weights.x[p->first] += p->second * disp;
+                weights.x[p.first] += p.second * disp;
             }
         }
 
@@ -105,7 +105,7 @@ namespace sgdtk
 
             if (wdiv > 1e5)
             {
-                double sf = 1.0 / wdiv;
+                auto sf = 1.0 / wdiv;
                 weights.scale(sf);
 
                 wdiv = 1.;
@@ -118,14 +118,14 @@ namespace sgdtk
         {
             scaleWeights(eta, lambda);
 
-            for (Offset offset : vectorN.getNonZeroOffsets())
+            for (auto offset : vectorN.getNonZeroOffsets())
             {
-                double grad = dLoss * offset.second;
-                double thisEta = perWeightUpdate(offset.first, grad, eta);
+                auto grad = dLoss * offset.second;
+                auto thisEta = perWeightUpdate(offset.first, grad, eta);
                 weights.x[offset.first] += offset.second * -thisEta * dLoss * wdiv;
             }
             // This is referenced on Leon Bottou's SGD page
-            double etab = eta * 0.01;
+            auto etab = eta * 0.01;
             wbias += -etab * dLoss;
         }
 

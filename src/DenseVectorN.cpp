@@ -75,9 +75,9 @@ void DenseVectorN::from(const VectorN &source)
     int length = source.length();
     x.resize(length, 0.0);
     Offsets offsets = source.getNonZeroOffsets();
-    for (int i = 0, sz = offsets.size(); i < sz; ++i)
+    for (Offset offset : offsets)
     {
-        x[offsets[i].first] = offsets[i].second;
+        x[offset.first] = offset.second;
     }
 }
 
@@ -88,10 +88,10 @@ void DenseVectorN::organize()
 
 double DenseVectorN::mag() const
 {
-    double acc = 0.0;
-    for (int i = 0, sz = x.size(); i < sz; ++i)
+    auto acc = 0.0;
+    for (auto v : x)
     {
-        acc += x[i] * x[i];
+        acc += v * v;
     }
     return acc;
 }
