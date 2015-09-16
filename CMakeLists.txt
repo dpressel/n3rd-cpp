@@ -2,9 +2,12 @@ cmake_minimum_required(VERSION 3.2)
 project(sgdtk_cpp)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -funroll-loops -mfpmath=sse")
 
 include_directories(include)
-find_package(Boost 1.57.0)
+
+#find_package(Boost 1.57.0)
+find_package(BLAS)
 set(SOURCE_FILES
     include/sgdtk/Exception.h
     include/sgdtk/FeatureProvider.h
@@ -33,10 +36,21 @@ set(SOURCE_FILES
 
 
 add_library(sgdtk SHARED ${SOURCE_FILES} include/sgdtk/DenseVectorN.h include/sgdtk/ModelFactory.h include/sgdtk/RobbinsMonroUpdateSchedule.h include/sgdtk/FixedLearningRate.h include/sgdtk/ConsumerProducerQueue.h)
+#target_link_libraries(sgdtk ${BLAS_blas_library})
+
+
+include_directories(${BLAS_INCLUDE_DIRS})
+target_link_libraries (sgdtk ${BLAS_LIBRARIES})
 
 add_executable(Train Train.cpp)
-add_dependencies(Train sgdtk)
-target_link_libraries(Train -L. sgdtk)
+add_dependencies(Train sgdtk ${BLAS_LIBRARIES})
+
+
+message(STATUS "Found ${BLAS_LIBRARIES}")
+target_link_libraries (Train sgdtk ${BLAS_LIBRARIES})
+
+
+#target_link_libraries(Train -L. sgdtk ${BLAS_blas_library})
 
 #add_executable(TestCP TestCP.cpp)
 #add_dependencies(TestCP sgdtk)

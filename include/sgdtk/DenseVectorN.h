@@ -61,13 +61,7 @@ namespace sgdtk
             x[i] = v;
         }
 
-        void scale(double scalar)
-        {
-            for (int i = 0, sz = x.size(); i < sz; ++i)
-            {
-                x[i] *= scalar;
-            }
-        }
+        void scale(double scalar);
 
         Offsets getNonZeroOffsets() const;
 
@@ -76,12 +70,18 @@ namespace sgdtk
             return x[i];
         }
 
-        double dot(const VectorN& vec);
+        double dot(const VectorN& vec) const;
 
+        double ddot(const DenseVectorN& vec) const;
 
         void from(const VectorN& source);
 
         void organize();
+
+        const Type getType() const
+        {
+            return DENSE;
+        }
     };
 }
 #endif

@@ -1,4 +1,5 @@
 #include "sgdtk/DenseVectorN.h"
+#include "cblas.h"
 
 using namespace sgdtk;
 
@@ -86,22 +87,52 @@ void DenseVectorN::organize()
 
 }
 
+#include <iostream>
 double DenseVectorN::mag() const
 {
+    const double* v1 = &x[0];
+    return (double)cblas_ddot(x.size(), v1, 1, v1, 1);
+/*
     auto acc = 0.0;
     for (auto v : x)
     {
         acc += v * v;
     }
     return acc;
+*/
 }
 
-double DenseVectorN::dot(const VectorN& vec)
+
+void DenseVectorN::scale(double scalar)
 {
-    double acc = 0.;
-    for (int i = 0, sz = x.size(); i < sz; ++i)
+    double* v1 = &x[0];
+    cblas_dscal(x.size(), scalar, v1, 1);
+    /*
+     for (int i = 0, sz = x.size(); i < sz; ++i)
     {
-        acc += x[i] * vec.at(i);
+        x[i] *= scalar;
+    }
+     */
+}
+
+double DenseVectorN::dot(const VectorN& vec) const
+{
+    if (vec.getType() == DENSE)
+    {
+        return ddot((const DenseVectorN&)vec);
+    }
+    auto acc = 0.;
+    for (auto offset : vec.getNonZeroOffsets())
+    {
+        acc += x[offset.first] * offset.second;
     }
     return acc;
+}
+
+double DenseVectorN::ddot(const DenseVectorN& vec) const
+{
+    const auto dvec = (DenseVectorN) vec;
+    const double *v1 = &x[0];
+    const double *v2 = &(dvec.x[0]);
+    return cblas_ddot(x.size(), v1, 1, v2, 1);
 }

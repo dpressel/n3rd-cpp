@@ -21,40 +21,6 @@ void SGDLearner::trainOne(Model *model, const FeatureVector *fv)
 
     lm->updateWeights(fv->getX(), eta, lambda, dLoss, y);
 }
-/*
-void SGDLearner::trainOneWithEta(LinearModel *lm, const FeatureVector *fv, double eta)
-{
-    double y = fv->getY();
-    double fx = lm->predict(fv);
-    double wdiv = lm->getWdiv();
-    wdiv /= (1 - eta * lambda);
-    if (wdiv > 1e5)
-    {
-        const double sf = 1.0 / wdiv;
-        lm->scaleInplace(sf);
-        wdiv = 1.;
-    }
-    lm->setWdiv(wdiv);
-
-    double d = lossFunction->dLoss(fx, y);
-    double disp = -eta * d * wdiv;
-
-    //const Offsets& sv = fv->getNonZeroOffsets();
-
-    lm->add(fv, disp);
-    //for (Offsets::const_iterator p = sv.begin(); p != sv.end(); ++p)
-    //{
-    //    lm->addInplace(p->first, p->second * disp);
-    //}
-
-    double etab = eta * 0.01;
-    double wbias = lm->getWbias();
-
-    wbias += -etab * d;
-    lm->setWbias(wbias);
-
-}
-*/
 
 void SGDLearner::preprocess(Model *model, const std::vector<FeatureVector *> &sample)
 {
@@ -124,10 +90,10 @@ Model *SGDLearner::trainEpoch(Model *model,
     }
 
 
-    for (size_t i = 0, sz = trainingExamples.size(); i < sz; ++i)
+    for (auto example : trainingExamples)
     {
         //double eta = eta0 / (1 + lambda * eta0 * numSeenTotal);
-        trainOne(model, trainingExamples[i]);
+        trainOne(model, example);
         //++numSeenTotal;
     }
 
@@ -152,13 +118,9 @@ void SGDLearner::eval(Model *model,
                       const std::vector<FeatureVector *> &testingExamples,
                       Metrics &metrics)
 {
-    int seen = testingExamples.size();
-
-    for (int i = 0; i < seen; ++i)
+    for (auto fv : testingExamples)
     {
-        const auto *fv = testingExamples[i];
         evalOne(model, fv, metrics);
-
     }
 
     auto *lm = (LinearModel *) model;

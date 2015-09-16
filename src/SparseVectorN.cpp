@@ -83,16 +83,15 @@ void SparseVectorN::organize() {
      */
 }
 
-double SparseVectorN::dot(const VectorN &vec)
+double SparseVectorN::dot(const VectorN &vec) const
 {
     auto acc = 0.;
 
-    Offsets offsets = getNonZeroOffsets();
-
-    for (int i = 0, sz = offsets.size(); i < sz; ++i)
+    for (auto offset : offsets)
     {
-        acc += offsets[i].second * vec.at(offsets[i].first);
+        acc += offset.second * vec.at(offset.first);
     }
+
     return acc;
 }
 

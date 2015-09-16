@@ -61,7 +61,7 @@ namespace sgdtk
 
         void add(const FeatureVector *fv, double disp)
         {
-            const auto &sv = fv->getNonZeroOffsets();
+            const auto &sv = fv->getX().getNonZeroOffsets();
             for (auto p : sv)
             {
                 weights.x[p.first] += p.second * disp;

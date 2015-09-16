@@ -9,6 +9,7 @@ namespace sgdtk
     class SparseVectorN : public VectorN
     {
         Offsets offsets;
+
     public:
 
         SparseVectorN();
@@ -49,7 +50,12 @@ namespace sgdtk
 
         void organize();
 
-        double dot(const VectorN &vec);
+        double dot(const VectorN &vec) const;
+
+        const Type getType() const
+        {
+            return SPARSE;
+        }
     };
 }
 #endif

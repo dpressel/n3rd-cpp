@@ -29,6 +29,11 @@ void LinearModel::scaleInplace(double scalar)
 
 double LinearModel::predict(const FeatureVector *fv) const
 {
+    /*
+     * THIS IS WHAT I WANT TO DO
+    auto& vecN = fv->getX();
+    auto dot = weights.dot(vecN);
+    */
     double dot = 0.;
     const Offsets &sv = fv->getNonZeroOffsets();
 
