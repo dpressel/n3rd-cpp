@@ -33,11 +33,11 @@ namespace sgdtk
         //void trainOneWithEta(LinearModel *lm, const FeatureVector *fv, double eta);
 
     public:
-        SGDLearner(const Loss *loss, double l = 1e-5, double kEta = -1., const ModelFactory* factory = NULL, LearningRateSchedule* schedule = NULL) :
+        SGDLearner(const Loss *loss, double l = 1e-5, double kEta = -1., const ModelFactory* factory = nullptr, LearningRateSchedule* schedule = nullptr) :
                 lossFunction(loss), lambda(l), eta0(kEta), numSeenTotal(0.)
         {
             modelFactory = (factory == NULL) ? (new LinearModelFactory()): (factory);
-            learningRateSchedule = (schedule == NULL) ? (new RobbinsMonroUpdateSchedule()): (schedule);
+            learningRateSchedule = (schedule == nullptr) ? (new RobbinsMonroUpdateSchedule()): (schedule);
         }
 
         ~SGDLearner()

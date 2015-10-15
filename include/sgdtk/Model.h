@@ -41,7 +41,7 @@ namespace sgdtk
          * @param fv feature vector
          * @return prediction
          */
-        virtual double predict(const FeatureVector *fv) const = 0;
+        virtual double predict(const FeatureVector *fv) = 0;
 
         /**
          * Create a deep copy of this

@@ -51,9 +51,14 @@ namespace sgdtk
             return y;
         }
 
-        const VectorN& getX() const
+        const VectorN* getX() const
         {
-            return *x;
+            return x;
+        }
+
+        VectorN* getX()
+        {
+            return x;
         }
 
         void setY(double label)

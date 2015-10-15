@@ -50,54 +50,54 @@ namespace sgdtk
          * @param file Model file to load from
          * @throws Exception
          */
-        void load(String file);
+        virtual void load(String file);
 
         /**
          * Save the model to a stream
          * @param file model to save to
          * @throws Exception
          */
-        void save(String file);
+        virtual void save(String file);
 
-        void add(const FeatureVector *fv, double disp)
+        virtual void add(const FeatureVector *fv, double disp)
         {
-            const auto &sv = fv->getX().getNonZeroOffsets();
+            const auto &sv = fv->getX()->getNonZeroOffsets();
             for (auto p : sv)
             {
                 weights.x[p.first] += p.second * disp;
             }
         }
 
-        double predict(const FeatureVector *fv) const;
+        virtual double predict(const FeatureVector *fv);
 
-        Model *prototype() const
+        virtual Model *prototype() const
         {
             return new LinearModel(*this);
         }
 
-        double getWdiv() const
+        virtual double getWdiv() const
         {
             return wdiv;
         }
 
-        void setWdiv(double wdiv)
+        virtual void setWdiv(double wdiv)
         {
             this->wdiv = wdiv;
         }
 
-        double getWbias() const
+        virtual double getWbias() const
         {
             return wbias;
         }
 
-        void setWbias(double wbias)
+        virtual void setWbias(double wbias)
         {
             this->wbias = wbias;
         }
 
-        double mag() const;
+        virtual double mag() const;
 
-        void scaleInplace(double scalar);
+        virtual void scaleInplace(double scalar);
 
         virtual void scaleWeights(double eta, double lambda)
         {
@@ -114,11 +114,11 @@ namespace sgdtk
             }
         }
 
-        void updateWeights(const VectorN& vectorN, double eta, double lambda, double dLoss, double y)
+        virtual void updateWeights(const VectorN* vectorN, double eta, double lambda, double dLoss, double y)
         {
             scaleWeights(eta, lambda);
 
-            for (auto offset : vectorN.getNonZeroOffsets())
+            for (auto offset : vectorN->getNonZeroOffsets())
             {
                 auto grad = dLoss * offset.second;
                 auto thisEta = perWeightUpdate(offset.first, grad, eta);

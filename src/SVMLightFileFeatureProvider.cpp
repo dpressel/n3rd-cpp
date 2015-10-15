@@ -74,9 +74,9 @@ std::vector<FeatureVector *> SVMLightFileFeatureProvider::load(String file)
 
 FeatureVector *SVMLightFileFeatureProvider::next()
 {
-    if (!ifile->good() || ifile->eof())
+    if (ifile->eof())
     {
-        return NULL;
+        return nullptr;
     }
     double y;
     double value;

@@ -89,11 +89,16 @@ Model *SGDLearner::trainEpoch(Model *model,
         preprocess(model, samples);
     }
 
-
+    int nt = 0;
     for (auto example : trainingExamples)
     {
         //double eta = eta0 / (1 + lambda * eta0 * numSeenTotal);
         trainOne(model, example);
+        ++nt;
+        //if (nt % 1000 == 0)
+        //{
+        //    std::cout << "Processed " << nt << std::endl;
+        //}
         //++numSeenTotal;
     }
 

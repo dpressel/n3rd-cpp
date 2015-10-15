@@ -5,6 +5,7 @@
 #include "sgdtk/Types.h"
 #include "sgdtk/VectorN.h"
 #include "Params.h"
+#include "sgdtk/Tensor.h"
 
 namespace sgdtk
 {
@@ -12,14 +13,14 @@ namespace sgdtk
     {
 
     public:
-        std::vector<double> x;
+        Tensor x;
         DenseVectorN(const VectorN& source);
         DenseVectorN(const DenseVectorN& dv);
         DenseVectorN();
 
         DenseVectorN(int length);
 
-        DenseVectorN(const std::vector<double>& x);
+        DenseVectorN(const Tensor& x);
 
         DenseVectorN& operator=(const VectorN &v);
 
@@ -29,18 +30,9 @@ namespace sgdtk
 
         void resize(int length)
         {
-            x.resize(length);
+            x.resize({length});
         }
-/*
-        const double operator[](int at) const
-        {
-            return x[at];
-        }
-        double& operator[](int at)
-        {
-            return x[at];
-        }
-*/
+
         int length() const
         {
             return x.size();
@@ -70,6 +62,15 @@ namespace sgdtk
             return x[i];
         }
 
+        Tensor& getX()
+        {
+            return x;
+        }
+        const Tensor& getX() const
+        {
+            return x;
+        }
+
         double dot(const VectorN& vec) const;
 
         double ddot(const DenseVectorN& vec) const;
@@ -84,4 +85,29 @@ namespace sgdtk
         }
     };
 }
+
+extern "C"
+{
+    typedef void* SGDTK_DVN;
+
+    SGDTK_DVN sgdtk_DenseVectorN_create(int);
+    void  sgdtk_DenseVectorN_destroy(SGDTK_DVN);
+    //void  sgdtk_DenseVectorN_copyOf(SGDTK_DVN, void*);
+    SGDTK_DVN sgdtk_DenseVectorN_copyOfDense(SGDTK_DVN other);
+    int sgdtk_DenseVectorN_length(SGDTK_DVN);
+    void sgdtk_DenseVectorN_addOffset(SGDTK_DVN,int, double);
+    double sgdtk_DenseVectorN_mag(SGDTK_DVN);
+    void sgdtk_DenseVectorN_update(SGDTK_DVN, int, double);
+    void sgdtk_DenseVectorN_set(SGDTK_DVN, int, double);
+    void sgdtk_DenseVectorN_scale(SGDTK_DVN, double);
+    double sgdtk_DenseVectorN_at(SGDTK_DVN, int);
+    //double sgdtk_DenseVectorN_dot(SGDTK_DVN, void*);
+    double sgdtk_DenseVectorN_ddot(SGDTK_DVN, SGDTK_DVN);
+    void sgdtk_DenseVectorN_resetFromDense(SGDTK_DVN, SGDTK_DVN);
+    //void sgdtk_Dense_resetFrom(void*);
+    void sgdtk_DenseVectorN_organize(SGDTK_DVN);
+
+}
+
+
 #endif

@@ -27,7 +27,7 @@ void LinearModel::scaleInplace(double scalar)
 
 }
 
-double LinearModel::predict(const FeatureVector *fv) const
+double LinearModel::predict(const FeatureVector *fv)
 {
     /*
      * THIS IS WHAT I WANT TO DO

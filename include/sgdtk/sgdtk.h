@@ -7,6 +7,7 @@
 #include "sgdtk/Exception.h"
 #include "sgdtk/FeatureProvider.h"
 #include "sgdtk/FeatureVector.h"
+#include "sgdtk/Tensor.h"
 #include "sgdtk/HingeLoss.h"
 #include "sgdtk/Learner.h"
 #include "sgdtk/LinearModel.h"
