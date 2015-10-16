@@ -54,11 +54,10 @@ int main(int argc, char** argv)
     {
         Params params(argc, argv);
 
-//        String modelFile = params("w2v");
-        String modelFile = "/home/dpressel/data/xdata/GoogleNews-vectors-negative300.bin";
-
         String trainFile = params("train");
         String evalFile = params("eval");
+        String modelFile = params("embed");
+
         const double Lambda = 1e-4;
         const double Eta = 0.1;
 

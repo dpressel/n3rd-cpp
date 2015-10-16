@@ -80,15 +80,14 @@ sgdtk::Tensor& TemporalConvolutionalLayer::backward(const sgdtk::Tensor& chainGr
     grads.constant(1.0);
     sgdtk::Tensor zpChainGrad;
 
-    embed(chainGrad, 0, zp, 0, zpChainGrad);
+    embed(chainGrad, 0, 0, zp, zpChainGrad);
     sgdtk::Tensor tWeights;
 
     transposeWeight4D(weights, tWeights);
 
     std::vector<double> empty;
-    sgdtk::Tensor gradUps;
-    FilterOps::conv1(zpChainGrad, tWeights, empty, grads);
 
+    FilterOps::conv1(zpChainGrad, tWeights, empty, grads);
     FilterOps::corr1Weights(input, chainGrad, gradsW);
 
     //// GRADIENT CHECK
