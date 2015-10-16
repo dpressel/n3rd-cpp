@@ -55,7 +55,7 @@ int main(int argc, char** argv)
         Params params(argc, argv);
 
 //        String modelFile = params("w2v");
-        String modelFile = "D:/xdata/GoogleNews-vectors-negative300.bin";
+        String modelFile = "/home/dpressel/data/xdata/GoogleNews-vectors-negative300.bin";
 
         String trainFile = params("train");
         String evalFile = params("eval");
