@@ -44,7 +44,7 @@ namespace n3rd
          * @param y deltas from this layer
          * @return
          */
-        virtual sgdtk::Tensor& backward(const sgdtk::Tensor& chainGrad, double y) = 0;
+        virtual sgdtk::Tensor& backward(sgdtk::Tensor& chainGrad, double y) = 0;
 
         virtual sgdtk::Tensor& getOutput()
         {

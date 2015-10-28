@@ -43,7 +43,7 @@ sgdtk::Tensor& AverageFoldingLayer::forward(const sgdtk::Tensor& z)
 // Since the output and input are the same for the max value, we can just apply the
 // max-pool value from the output
 
-sgdtk::Tensor& AverageFoldingLayer::backward(const sgdtk::Tensor& chainGrad, double y)
+sgdtk::Tensor& AverageFoldingLayer::backward(sgdtk::Tensor& chainGrad, double y)
 {
     auto div = 1.0 / k;
     int outEmbeddingSz = embeddingSz / k;

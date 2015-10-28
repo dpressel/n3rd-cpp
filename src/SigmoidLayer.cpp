@@ -16,7 +16,7 @@ sgdtk::Tensor& SigmoidLayer::forward(const sgdtk::Tensor& z)
     return output;
 }
 
-sgdtk::Tensor& SigmoidLayer::backward(const sgdtk::Tensor& chainGrad, double y)
+sgdtk::Tensor& SigmoidLayer::backward(sgdtk::Tensor& chainGrad, double y)
 {
     int sz = chainGrad.size();
 

@@ -49,7 +49,7 @@ namespace n3rd
          * @param y Label
          * @return The deltas for this layer
          */
-        sgdtk::Tensor& backward(const sgdtk::Tensor& outputLayerGrad, double y);
+        sgdtk::Tensor& backward(sgdtk::Tensor& outputLayerGrad, double y);
 
         int getOutputLength() const
         {

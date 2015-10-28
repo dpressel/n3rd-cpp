@@ -63,7 +63,7 @@ sgdtk::Tensor& KMaxPoolingLayer::forward(const sgdtk::Tensor& z)
 
 // Since the output and input are the same for the max value, we can just apply the
 // max-pool value from the output
-sgdtk::Tensor& KMaxPoolingLayer::backward(const sgdtk::Tensor& chainGrad, double y)
+sgdtk::Tensor& KMaxPoolingLayer::backward(sgdtk::Tensor& chainGrad, double y)
 {
 
     grads.constant(0.);

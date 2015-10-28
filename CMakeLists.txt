@@ -63,6 +63,7 @@ set(SOURCE_FILES
         include/n3rd/KMaxPoolingLayer.h
         src/KMaxPoolingLayer.cpp
         include/n3rd/Word2VecModel.h
+        include/n3rd/ReLULayer.h
         include/n3rd/OrderedEmbeddedDatasetReader.h
         src/OrderedEmbeddedDatasetReader.cpp
         include/n3rd/SumEmbeddedDatasetReader.h
@@ -70,7 +71,10 @@ set(SOURCE_FILES
         src/Word2VecModel.cpp
         include/n3rd/NeuralNetModelFactory.h
         include/n3rd/WeightHacks.h
-        src/WeightHacks.cpp)
+        include/n3rd/MaxOverTimePoolingLayer.h
+        src/ReLULayer.cpp
+        src/WeightHacks.cpp include/n3rd/DropoutLayer.h src/DropoutLayer.cpp
+        src/MaxOverTimePoolingLayer.cpp)
 
 add_definitions(-DUSE_BLAS=1)
 #add_compile_options(-march=native -mfpmath=sse)
@@ -79,10 +83,11 @@ add_library(sgdtk SHARED ${SOURCE_FILES})
 #STRING(REGEX MATCH "dll" "" ${LAPACK_STATIC} ${LAPACK_lapack_LIBRARY})
 include_directories(/usr/openblas/include)
 #target_link_libraries (sgdtk ${BLAS_LIBRARIES}")
-target_link_libraries(sgdtk openblas)
+target_link_libraries(sgdtk openblas fftw m)
 add_executable(Train Train.cpp)
 add_executable(TrainCNN TrainCNN.cpp)
 add_executable(TrainNBoW TrainNBoW.cpp)
+add_executable(TestFFT1D TestFFT1D.cpp)
 add_executable(TestFC TestFC.cpp)
 add_executable(TestFCBlas TestFCBlas.cpp)
 add_executable(TestConv TestConv.cpp)
@@ -90,14 +95,15 @@ add_executable(TestConv TestConv.cpp)
 #add_dependencies(Train sgdtk ${BLAS_LIBRARIES})
 #add_dependencies(Train sgdtk ${BLAS_LIBRARIES})
 
-target_link_libraries (Train sgdtk openblas)
+target_link_libraries (Train sgdtk openblas fftw3 m)
 
-target_link_libraries (TrainCNN sgdtk openblas)
-target_link_libraries (TestFC sgdtk openblas)
-target_link_libraries (TestFCBlas sgdtk openblas)
-target_link_libraries (TestConv sgdtk openblas)
+target_link_libraries (TrainCNN sgdtk openblas fftw3 m)
+target_link_libraries (TestFFT1D sgdtk openblas fftw3 m)
+target_link_libraries (TestFC sgdtk openblas fftw3 m)
+target_link_libraries (TestFCBlas sgdtk openblas fftw3 m)
+target_link_libraries (TestConv sgdtk openblas fftw3 m)
 #target_link_libraries (TestConvBlas sgdtk libopenblas.dll)
-target_link_libraries(TrainNBoW sgdtk openblas)
+target_link_libraries(TrainNBoW sgdtk openblas fftw3 m)
 #target_link_libraries(Train -L. sgdtk ${BLAS_blas_library})
 
 #add_executable(TestCP TestCP.cpp)

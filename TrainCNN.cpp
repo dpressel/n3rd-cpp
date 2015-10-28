@@ -13,6 +13,8 @@
 #include "n3rd/FullyConnectedLayerBlas.h"
 #include "n3rd/AverageFoldingLayer.h"
 #include "n3rd/KMaxPoolingLayer.h"
+#include "n3rd/ReLULayer.h"
+#include "n3rd/MaxOverTimePoolingLayer.h"
 #include "n3rd/WeightHacks.h"
 using namespace sgdtk;
 using namespace n3rd;
@@ -33,18 +35,36 @@ void showMetrics(const Metrics& metrics, String pre)
 
 }
 
-Learner* createTrainer(double lambda, double eta)
+Learner* createTrainer(double lambda, double eta, int embeddingsAsChannels)
 {
     // FIXME!!
+    NeuralNetModelFactory* nnmf;
+    if (embeddingsAsChannels)
+    {
+        std::cout << "Use embeddings as input channels" << std::endl;
+        nnmf = new NeuralNetModelFactory( {
+                // Emit 8 feature maps use a kernel width of 7 -- embeddings are 300 deep (L1)
+                new TemporalConvolutionalLayer(100, 300, 7, 1),
+                new MaxOverTimePoolingLayer(100), new TanhLayer(),
+                new FullyConnectedLayer(1, 100), new TanhLayer() });
+    }
+    else
+    {
+        nnmf = new NeuralNetModelFactory({
+                // Emit 8 feature maps use a kernel width of 7 -- embeddings are 300 deep (L1)
+                new TemporalConvolutionalLayer(4, 1, 7, 300), new TanhLayer(),
+                // Cut the embedding dim down to 75 by averaging adjacent embedding rows
+                new AverageFoldingLayer(4, 300, 4),
+                // Do K dynamic pooling grabbing the 10 highest values from each signal
+                new KMaxPoolingLayer(3, 4, 75), new TanhLayer(),
+                new FullyConnectedLayer(100, 900), new TanhLayer(),
+                new FullyConnectedLayer(1, 100), new TanhLayer() });
 
-    Learner* learner = new SGDLearner(new LogLoss(), lambda, eta, new NeuralNetModelFactory({
-            // Emit 8 feature maps use a kernel width of 7 -- embeddings are 300 deep (L1)
-            new TemporalConvolutionalLayer(4, 1, 7, 300),
-            // Cut the embedding dim down to 75 by averaging adjacent embedding rows
-            new AverageFoldingLayer(4, 300, 4),
-            new KMaxPoolingLayer(3, 4, 75), new TanhLayer(),
-            new FullyConnectedLayer(100, 900), new TanhLayer(),
-            new FullyConnectedLayer(1, 100), new TanhLayer() }));
+
+    }
+
+    SGDLearner *learner = new SGDLearner(new LogLoss(), lambda, eta, nnmf);
+
     return learner;
 }
 
@@ -63,6 +83,7 @@ int main(int argc, char** argv)
 
         int epochs = valueOf<int>(params("epochs", "5"));
 
+        int embeddingsAsChannels = valueOf<int>(params("embed2channels", "0"));
         std::cout << "Model file: " << modelFile << std::endl;
 
         OrderedEmbeddedDatasetReader reader(modelFile, (7 - 1) / 2);
@@ -92,7 +113,7 @@ int main(int argc, char** argv)
 #endif
         }
 
-        Learner* learner = createTrainer(Lambda, Eta);
+        Learner* learner = createTrainer(Lambda, Eta, embeddingsAsChannels);
 
         Model* model = learner->create(nullptr);
 #ifdef __DEBUG

@@ -40,7 +40,7 @@ int main(int argc, char** argv)
     {
         Params params(argc, argv);
 
-        String modelFile = "D:/xdata/GoogleNews-vectors-negative300.bin";
+        String modelFile = params("embed");
         String trainFile = params("train");
         String evalFile = params("eval");
         const double Lambda = 1e-4;
@@ -56,7 +56,12 @@ int main(int argc, char** argv)
 
         auto trainingSet = reader.load(trainFile);
 
-
+#ifdef __DEBUG
+        // Shuffle deterministically
+        WeightHacks::shuffle(trainingSet);
+#else
+        std::random_shuffle(trainingSet.begin(), trainingSet.end());
+#endif
         double elapsed = sgdtk::currentTimeSeconds() - l0;
         std::cout << "Training data ("  << trainingSet.size() << " examples) + loaded in " <<  elapsed <<  "s" << std::endl;
 
@@ -68,6 +73,13 @@ int main(int argc, char** argv)
         {
 
             evalSet = reader.load(evalFile);
+
+#ifdef __DEBUG
+            // Shuffle deterministically
+            WeightHacks::shuffle(evalSet);
+#else
+            std::random_shuffle(evalSet.begin(), evalSet.end());
+#endif
             evalSet.resize(3590);
         }
 

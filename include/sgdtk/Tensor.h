@@ -137,7 +137,6 @@ namespace sgdtk
         }
     }
 
-
     //Tensor* embed(const Tensor* tensor, int h, int w);
     inline void embed(const Tensor& tensor, int l, int h, int w, Tensor& zpCube)
     {

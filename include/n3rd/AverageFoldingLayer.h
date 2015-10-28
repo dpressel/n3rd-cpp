@@ -13,12 +13,12 @@ namespace n3rd
 {
     class AverageFoldingLayer : public Layer
     {
-    public:
+
         int embeddingSz;
         int featureMapSz;
         int numFrames;
         int k;
-
+    public:
         AverageFoldingLayer()
         {
 
@@ -33,7 +33,7 @@ namespace n3rd
 
         sgdtk::Tensor& forward(const sgdtk::Tensor& x);
 
-        sgdtk::Tensor& backward(const sgdtk::Tensor& chainGrad, double y);
+        sgdtk::Tensor& backward(sgdtk::Tensor& chainGrad, double y);
 
 
         int getEmbeddingSz() const

@@ -53,7 +53,7 @@ sgdtk::Tensor& TemporalConvolutionalLayer::forward(const sgdtk::Tensor& z)
 }
 
 
-sgdtk::Tensor& TemporalConvolutionalLayer::backward(const sgdtk::Tensor& chainGrad, double y)
+sgdtk::Tensor& TemporalConvolutionalLayer::backward(sgdtk::Tensor& chainGrad, double y)
 {
     const int featureMapSz = weights.dims[0];
     const int embeddingSz = weights.dims[2];
@@ -61,7 +61,7 @@ sgdtk::Tensor& TemporalConvolutionalLayer::backward(const sgdtk::Tensor& chainGr
     const int numFrames = input.dims[2];
     const int convOutputSz = numFrames - kW + 1;
     // The desired dims going backwards is going to be
-
+    chainGrad.reshape({featureMapSz, embeddingSz, convOutputSz});
     //std::vector<int> outputDims({ featureMapSz, convOutputSz, embeddingSz });
 
     int stride = convOutputSz * embeddingSz;

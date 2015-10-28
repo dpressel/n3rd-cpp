@@ -176,7 +176,7 @@ sgdtk::Tensor& TemporalConvolutionalLayerBlas::forward(const sgdtk::Tensor& z)
 }
 
 
-sgdtk::Tensor& TemporalConvolutionalLayerBlas::backward(const sgdtk::Tensor &chainGrad, double y)
+sgdtk::Tensor& TemporalConvolutionalLayerBlas::backward(sgdtk::Tensor &chainGrad, double y)
 {
     const int oT = numFrames - kW + 1;
 

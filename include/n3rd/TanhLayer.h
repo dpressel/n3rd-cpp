@@ -22,7 +22,7 @@ namespace n3rd
 
         sgdtk::Tensor& forward(const sgdtk::Tensor& input);
 
-        sgdtk::Tensor& backward(const sgdtk::Tensor& chainGrad, double y);
+        sgdtk::Tensor& backward(sgdtk::Tensor& chainGrad, double y);
 
         std::string getType() const { return "TanhLayer"; }
     };

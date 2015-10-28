@@ -1,8 +1,8 @@
-#include "n3rd/TanhLayer.h"
+#include "n3rd/ReLULayer.h"
 
 using namespace n3rd;
 
-sgdtk::Tensor& TanhLayer::forward(const sgdtk::Tensor& z)
+sgdtk::Tensor& ReLULayer::forward(const sgdtk::Tensor& z)
 {
     int sz = z.size();
 
@@ -17,18 +17,18 @@ sgdtk::Tensor& TanhLayer::forward(const sgdtk::Tensor& z)
 
     for (int i = 0; i < sz; ++i)
     {
-        output[i] = std::tanh(z[i]);
+        output[i] = relu(z[i]);
     }
     return output;
 }
 
-sgdtk::Tensor& TanhLayer::backward(sgdtk::Tensor& chainGrad, double y)
+sgdtk::Tensor& ReLULayer::backward(sgdtk::Tensor& chainGrad, double y)
 {
     int sz = chainGrad.size();
 
     for (int i = 0; i < sz; ++i)
     {
-        grads[i] = chainGrad[i] * (1 - output[i]*output[i]);
+        grads[i] = chainGrad[i] * drelu(output[i]);
     }
     return grads;
 }

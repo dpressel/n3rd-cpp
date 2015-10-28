@@ -100,7 +100,7 @@ namespace n3rd
         // Since the output and input are the same for the max value, we can just apply the
         // max-pool value from the output
 
-        sgdtk::Tensor& backward(const sgdtk::Tensor& chainGrad, double y);
+        sgdtk::Tensor& backward(sgdtk::Tensor& chainGrad, double y);
 
         std::string getType() const { return "KMaxPoolingLayer"; }
     };

@@ -60,7 +60,7 @@ sgdtk::Tensor& FullyConnectedLayer::fX(const Tensor& x, const Tensor& w)
 }
 
 
-sgdtk::Tensor& FullyConnectedLayer::backward(const sgdtk::Tensor& chainGrad, double y)
+sgdtk::Tensor& FullyConnectedLayer::backward(sgdtk::Tensor& chainGrad, double y)
 {
 
     int zLength = z.size();

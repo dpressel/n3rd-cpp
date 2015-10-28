@@ -37,7 +37,7 @@ sgdtk::Tensor& LogSoftMaxLayer::forward(const sgdtk::Tensor& z)
 }
 
 
-sgdtk::Tensor& LogSoftMaxLayer::backward(const sgdtk::Tensor& chainGrad, double y)
+sgdtk::Tensor& LogSoftMaxLayer::backward(sgdtk::Tensor& chainGrad, double y)
 {
     int sz = output.size();
     // Only will be one thing above us, a loss function
