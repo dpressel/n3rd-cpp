@@ -11,6 +11,7 @@
 #include "n3rd/TemporalConvolutionalLayerBlas.h"
 #include "n3rd/FullyConnectedLayer.h"
 #include "n3rd/FullyConnectedLayerBlas.h"
+#include "n3rd/FullyConnectedLayerCuBlas.h"
 #include "n3rd/AverageFoldingLayer.h"
 #include "n3rd/KMaxPoolingLayer.h"
 #include "n3rd/ReLULayer.h"
@@ -48,7 +49,7 @@ Learner* createTrainer(double lambda, double eta, int embeddingsAsChannels)//, c
                 // Emit 8 feature maps use a kernel width of 7 -- embeddings are 300 deep (L1)
                 new TemporalConvolutionalLayerCuBlas(100, 300, 7),
                 new MaxOverTimePoolingLayer(100), new TanhLayer(),
-                new FullyConnectedLayer(1, 100), new TanhLayer() });
+                new FullyConnectedLayerCuBlas(1, 100), new TanhLayer() });
     }
     else
     {

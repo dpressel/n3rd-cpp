@@ -1,27 +1,33 @@
-#ifndef __N3RD_CPP_FULLYCONNECTEDLAYERBLAS_H__
-#define __N3RD_CPP_FULLYCONNECTEDLAYERBLAS_H__
+#ifndef __N3RD_CPP_FULLYCONNECTEDLAYERCUBLAS_H__
+#define __N3RD_CPP_FULLYCONNECTEDLAYERCUBLAS_H__
 
 #include "n3rd/Layer.h"
 #include <sgdtk/Tensor.h>
 #include <cmath>
 #include <cstdlib>
 #include <sgdtk/DenseVectorN.h>
-
+#include <sgdtk/CudaTensor.h>
 
 namespace n3rd
 {
-    class FullyConnectedLayerBlas : public Layer
+    class FullyConnectedLayerCuBlas : public Layer
     {
 
-        sgdtk::Tensor z;
+
         int outputLength;
         int inputLength;
+
+        sgdtk::CudaTensor dWeights;
+        sgdtk::CudaTensor dWeightGrads;
+        sgdtk::CudaTensor dOutput;
+        sgdtk::CudaTensor dGrads;
+        sgdtk::CudaTensor dInput;
 
     public:
         /**
          * Empty constructor (for reincarnating models)
          */
-        FullyConnectedLayerBlas()
+        FullyConnectedLayerCuBlas()
         {
 
         }
@@ -32,7 +38,7 @@ namespace n3rd
          * @param inputLength Input length
          */
 
-        FullyConnectedLayerBlas(int outputLength, int inputLength);
+        FullyConnectedLayerCuBlas(int outputLength, int inputLength);
 
         /**
          * Forward prop
@@ -71,7 +77,7 @@ namespace n3rd
         {
             this->inputLength = inputLength;
         }
-        std::string getType() const { return "FullyConnectedLayerBlas"; }
+        std::string getType() const { return "FullyConnectedLayerCuBlas"; }
 
     };
 }

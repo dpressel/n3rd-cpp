@@ -7,17 +7,6 @@
 using namespace n3rd;
 using namespace sgdtk;
 
-
-sgdtk::Tensor& FullyConnectedLayerBlas::forward(const sgdtk::Tensor& input)
-{
-
-    output.constant(0.);
-    std::copy(input.d.begin(), input.d.end(), z.d.begin());
-    cblas_dgemv(CblasColMajor, CblasNoTrans, outputLength, inputLength, 1.0, &weights.d[0], outputLength, &input.d[0], 1, 1.0, &output.d[0], 1);
-    return output;
-
-}
-
 FullyConnectedLayerBlas::FullyConnectedLayerBlas(int outputLength, int inputLength)
 {
 
@@ -60,6 +49,15 @@ FullyConnectedLayerBlas::FullyConnectedLayerBlas(int outputLength, int inputLeng
 
 }
 
+sgdtk::Tensor& FullyConnectedLayerBlas::forward(const sgdtk::Tensor& input)
+{
+
+    output.constant(0.);
+    std::copy(input.d.begin(), input.d.end(), z.d.begin());
+    cblas_dgemv(CblasColMajor, CblasNoTrans, outputLength, inputLength, 1.0, &weights.d[0], outputLength, &input.d[0], 1, 1.0, &output.d[0], 1);
+    return output;
+
+}
 
 
 sgdtk::Tensor& FullyConnectedLayerBlas::backward(sgdtk::Tensor& chainGrad, double y)

@@ -65,8 +65,10 @@ set(SOURCE_FILES
         src/TanhLayer.cpp
         include/n3rd/FullyConnectedLayer.h
         include/n3rd/FullyConnectedLayerBlas.h
+        include/n3rd/FullyConnectedLayerCuBlas.h
         src/FullyConnectedLayer.cpp
         src/FullyConnectedLayerBlas.cpp
+        src/FullyConnectedLayerCuBlas.cpp
         include/n3rd/LogSoftMaxLayer.h
         src/LogSoftMaxLayer.cpp
         include/n3rd/SigmoidLayer.h
@@ -112,6 +114,7 @@ add_executable(TrainNBoW TrainNBoW.cpp)
 add_executable(TestFFT1D TestFFT1D.cpp)
 add_executable(TestFC TestFC.cpp)
 add_executable(TestFCBlas TestFCBlas.cpp)
+add_executable(TestFCCuBlas TestFCCuBlas.cpp)
 add_executable(TestConv TestConv.cpp)
 add_executable(TestConvGPU TestConvGPU.cpp)
 add_executable(TestGPU TestGPU.cpp)
@@ -126,6 +129,7 @@ target_link_libraries (TestFFT1D n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m)
 target_link_libraries (TestFC n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m)
 target_link_libraries (TestGPU n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m)
 target_link_libraries (TestFCBlas n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m)
+target_link_libraries (TestFCCuBlas n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m)
 target_link_libraries (TestConv n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m)
 target_link_libraries (TestConvGPU n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m)
 #target_link_libraries (TestConvBlas sgdtk libopenblas.dll)
