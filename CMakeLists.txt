@@ -1,11 +1,23 @@
 cmake_minimum_required(VERSION 2.8.12.2)
-project(sgdtk_cpp)
+project(n3rd_cpp)
+
+
+option(ENABLE_CUDA "Enable the cuda build" ON)
+
+
+
+if(ENABLE_CUDA)
+    find_package(CUDA REQUIRED)
+    include_directories(${CUDA_INCLUDE_DIRS})
+    set(CUDA_EXTRA_LIBRARIES ${CUDA_INCLUDE_DIRS}/../lib64/libcublas.so)
+    #set(CUDA_EXTRA_LIBRARIES ${CUDA_INCLUDE_DIRS}/../lib64/libcudnn.so ${CUDA_INCLUDE_DIRS}/../lib64/libcublas.so)
+endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -funroll-loops -mfpmath=sse")
 
 include_directories(include)
-
+link_libraries(${CUDA_LIBRARIES})
 #find_package(Boost 1.57.0)
 #find_package(BLAS)
 #find_package(LAPACK)
@@ -36,6 +48,7 @@ set(SOURCE_FILES
         include/n3rd/NeuralNetModel.h
         include/n3rd/Layer.h
         include/n3rd/AverageFoldingLayer.h
+        include/sgdtk/GPU.h
         src/Exception.cpp
         src/LinearModel.cpp
         src/Params.cpp
@@ -58,8 +71,15 @@ set(SOURCE_FILES
         src/LogSoftMaxLayer.cpp
         include/n3rd/SigmoidLayer.h
         src/SigmoidLayer.cpp
+        src/GPU.cpp
         include/n3rd/TemporalConvolutionalLayer.h
         src/TemporalConvolutionalLayer.cpp
+        include/n3rd/TemporalConvolutionalLayerCuBlas.h
+        src/TemporalConvolutionalLayerCuBlas.cpp
+        include/n3rd/TemporalConvolutionalLayerFFT.h
+        src/TemporalConvolutionalLayerFFT.cpp
+        include/n3rd/TemporalConvolutionalLayerBlas.h
+        src/TemporalConvolutionalLayerBlas.cpp
         include/n3rd/KMaxPoolingLayer.h
         src/KMaxPoolingLayer.cpp
         include/n3rd/Word2VecModel.h
@@ -73,17 +93,19 @@ set(SOURCE_FILES
         include/n3rd/WeightHacks.h
         include/n3rd/MaxOverTimePoolingLayer.h
         src/ReLULayer.cpp
+        include/n3rd/FFTOps.h
+        src/FFTOps.cpp
         src/WeightHacks.cpp include/n3rd/DropoutLayer.h src/DropoutLayer.cpp
         src/MaxOverTimePoolingLayer.cpp)
 
 add_definitions(-DUSE_BLAS=1)
 #add_compile_options(-march=native -mfpmath=sse)
-add_library(sgdtk SHARED ${SOURCE_FILES})
+add_library(n3rd SHARED ${SOURCE_FILES})
 #STRING(REGEX MATCH "blas" "libopenblas" ${OPENBLAS} ${BLAS_LIBRARIES})
 #STRING(REGEX MATCH "dll" "" ${LAPACK_STATIC} ${LAPACK_lapack_LIBRARY})
 include_directories(/usr/openblas/include)
 #target_link_libraries (sgdtk ${BLAS_LIBRARIES}")
-target_link_libraries(sgdtk openblas fftw m)
+target_link_libraries(n3rd openblas ${CUDA_EXTRA_LIBRARIES} fftw m)
 add_executable(Train Train.cpp)
 add_executable(TrainCNN TrainCNN.cpp)
 add_executable(TrainNBoW TrainNBoW.cpp)
@@ -91,19 +113,23 @@ add_executable(TestFFT1D TestFFT1D.cpp)
 add_executable(TestFC TestFC.cpp)
 add_executable(TestFCBlas TestFCBlas.cpp)
 add_executable(TestConv TestConv.cpp)
+add_executable(TestConvGPU TestConvGPU.cpp)
+add_executable(TestGPU TestGPU.cpp)
 #add_executable(TestConvBlas TestConvBlas.cpp)
 #add_dependencies(Train sgdtk ${BLAS_LIBRARIES})
 #add_dependencies(Train sgdtk ${BLAS_LIBRARIES})
 
-target_link_libraries (Train sgdtk openblas fftw3 m)
+target_link_libraries (Train n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m)
 
-target_link_libraries (TrainCNN sgdtk openblas fftw3 m)
-target_link_libraries (TestFFT1D sgdtk openblas fftw3 m)
-target_link_libraries (TestFC sgdtk openblas fftw3 m)
-target_link_libraries (TestFCBlas sgdtk openblas fftw3 m)
-target_link_libraries (TestConv sgdtk openblas fftw3 m)
+target_link_libraries (TrainCNN n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m)
+target_link_libraries (TestFFT1D n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m)
+target_link_libraries (TestFC n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m)
+target_link_libraries (TestGPU n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m)
+target_link_libraries (TestFCBlas n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m)
+target_link_libraries (TestConv n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m)
+target_link_libraries (TestConvGPU n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m)
 #target_link_libraries (TestConvBlas sgdtk libopenblas.dll)
-target_link_libraries(TrainNBoW sgdtk openblas fftw3 m)
+target_link_libraries(TrainNBoW n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m)
 #target_link_libraries(Train -L. sgdtk ${BLAS_blas_library})
 
 #add_executable(TestCP TestCP.cpp)

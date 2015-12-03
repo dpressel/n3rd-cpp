@@ -15,6 +15,7 @@ namespace n3rd
 {
     class ReLULayer : public Layer
     {
+
     public:
 
         ReLULayer() {}

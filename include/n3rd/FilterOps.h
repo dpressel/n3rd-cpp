@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <sgdtk/Tensor.h>
+#include <fftw3.h>
 
 namespace n3rd
 {
@@ -24,6 +25,10 @@ namespace n3rd
         static void conv2(const sgdtk::Tensor& data, const sgdtk::Tensor& kernels, const std::vector<double> &biases, sgdtk::Tensor& output);
 
         static void corr2(const sgdtk::Tensor& data, const sgdtk::Tensor& kernels, const std::vector<double> &biases, sgdtk::Tensor& output);
+
+
+
+        static void fftfilt1(const sgdtk::Tensor& data, const sgdtk::Tensor& kernels, const std::vector<double> &biases, sgdtk::Tensor& output, bool corr = true);
     };
 }
 

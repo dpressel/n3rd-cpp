@@ -16,6 +16,8 @@
 #include "n3rd/ReLULayer.h"
 #include "n3rd/MaxOverTimePoolingLayer.h"
 #include "n3rd/WeightHacks.h"
+//#include "n3rd/TemporalConvolutionalLayerFFT.h"
+#include "n3rd/TemporalConvolutionalLayerCuBlas.h"
 using namespace sgdtk;
 using namespace n3rd;
 
@@ -35,7 +37,7 @@ void showMetrics(const Metrics& metrics, String pre)
 
 }
 
-Learner* createTrainer(double lambda, double eta, int embeddingsAsChannels)
+Learner* createTrainer(double lambda, double eta, int embeddingsAsChannels)//, cudnnHandle_t handle)
 {
     // FIXME!!
     NeuralNetModelFactory* nnmf;
@@ -44,7 +46,7 @@ Learner* createTrainer(double lambda, double eta, int embeddingsAsChannels)
         std::cout << "Use embeddings as input channels" << std::endl;
         nnmf = new NeuralNetModelFactory( {
                 // Emit 8 feature maps use a kernel width of 7 -- embeddings are 300 deep (L1)
-                new TemporalConvolutionalLayer(100, 300, 7, 1),
+                new TemporalConvolutionalLayerCuBlas(100, 300, 7),
                 new MaxOverTimePoolingLayer(100), new TanhLayer(),
                 new FullyConnectedLayer(1, 100), new TanhLayer() });
     }
@@ -70,8 +72,12 @@ Learner* createTrainer(double lambda, double eta, int embeddingsAsChannels)
 
 int main(int argc, char** argv)
 {
+    //cudnnHandle_t handle = NULL;
+
     try
     {
+        initCuBlas();
+        //cudnnCreate(&handle);
         Params params(argc, argv);
 
         String trainFile = params("train");
@@ -85,6 +91,8 @@ int main(int argc, char** argv)
 
         int embeddingsAsChannels = valueOf<int>(params("embed2channels", "0"));
         std::cout << "Model file: " << modelFile << std::endl;
+
+        Learner* learner = createTrainer(Lambda, Eta, embeddingsAsChannels);
 
         OrderedEmbeddedDatasetReader reader(modelFile, (7 - 1) / 2);
 
@@ -113,7 +121,7 @@ int main(int argc, char** argv)
 #endif
         }
 
-        Learner* learner = createTrainer(Lambda, Eta, embeddingsAsChannels);
+
 
         Model* model = learner->create(nullptr);
 #ifdef __DEBUG
@@ -140,9 +148,9 @@ int main(int argc, char** argv)
             std::cout << "Epoch training time " << elapsedThisEpoch << "s" << std::endl;
             totalTrainingElapsed += elapsedThisEpoch;
 
-            learner->eval(model, trainingSet, metrics);
-            showMetrics(metrics, "Training Set Eval Metrics");
-            metrics.clear();
+            //learner->eval(model, trainingSet, metrics);
+            //showMetrics(metrics, "Training Set Eval Metrics");
+            //metrics.clear();
 
             if (!evalSet.empty())
             {
@@ -161,8 +169,10 @@ int main(int argc, char** argv)
     }
     catch (Exception& ex)
     {
+
         std::cout << "Exception: " << ex.getMessage() << std::endl;
     }
-
+    //if (handle) cudnnDestroy(handle);
+    doneCuBlas();
     return 0;
 }

@@ -102,6 +102,26 @@ namespace sgdtk
         {
             return d.empty();
         }
+
+        void scale(Real x)
+        {
+            for (int i = 0, sz = d.size(); i < sz; ++i)
+            {
+                d[i] *= x;
+            }
+        }
+        void add(const Tensor& x)
+        {
+            int sz = x.size();
+            if (sz != d.size())
+            {
+                throw new sgdtk::Exception("Invalid shape!");
+            }
+            for (int i = 0; i < sz; ++i)
+            {
+                d[i] += x[i];
+            }
+        }
     };
 
     inline void transposeWeight4D(const Tensor& weight, Tensor& weightCopy)

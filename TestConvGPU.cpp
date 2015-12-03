@@ -5,7 +5,8 @@
 
 
 #include "n3rd/TemporalConvolutionalLayer.h"
-
+//#include "n3rd/TemporalConvolutionalLayerCuDNN.h"
+#include "n3rd/TemporalConvolutionalLayerCuBlas.h"
 using namespace sgdtk;
 using namespace n3rd;
 
@@ -29,7 +30,9 @@ std::vector<double> K = {
         4,5,6
 };
 
-
+std::vector<double> O = {
+        161, 137, 124, 122, 131, 151, 182
+};
 std::vector<double> OFM1IFM1 = {22,34,46,58,64,94,124,154};
 
 std::vector<double> IFM2K = {  1,2,3,
@@ -89,121 +92,42 @@ double SQ_M_W_1000 = 11477.130271620003;
 
 void testForward() throw(Exception)
 {
-    TemporalConvolutionalLayer *l = new TemporalConvolutionalLayer(1, 1, 3, 2);
+    //TemporalConvolutionalLayerCuDNN *l = new TemporalConvolutionalLayerCuDNN(gHandle, 1, 1, 6, 1);
+    TemporalConvolutionalLayerCuBlas* l = new TemporalConvolutionalLayerCuBlas(1,1,6);
     auto &w = l->getParams();
     for (int i = 0; i < K.size(); ++i)
     {
         w[i] = K[i];
     }
-    Tensor d(D, {1, 2, 6});
+    //l->copyWeights();
+
+    auto& t = l->getParams();
+
+    Tensor d(D, {1, 1, 12});
     Tensor &output = l->forward(d);
 
-    assertEquals(output.size(), OFM1IFM1.size());
+    assertEquals(output.size(), O.size());
 
-    for (int i = 0; i < OFM1IFM1.size(); ++i)
-    {
-        assertEquals(output[i], OFM1IFM1[i]);
-    }
-
-}
-
-void testForward2to1() throw(Exception)
-{
-
-    TemporalConvolutionalLayer *l = new TemporalConvolutionalLayer(1, 2, 3, 2);
-
-    Tensor &weights = l->getParams();
-    for (int i = 0; i < IFM2K.size(); ++i)
-    {
-        weights.d[i] = IFM2K[i];
-    }
-
-
-    Tensor d(IFM2D, {2, 2, 6});
-    Tensor &output = l->forward(d);
-
-    assertEquals(OFM1IFM2.size(), output.size());
-    for (int i = 0; i < OFM1IFM2.size(); ++i)
-    {
-        assertEquals(output[i], OFM1IFM2[i]);
-    }
-
-}
-
-void testForward2to3() throw(Exception)
-{
-
-    TemporalConvolutionalLayer *l = new TemporalConvolutionalLayer(3, 2, 3, 2);
-
-    Tensor &weights = l->getParams();
-    for (int i = 0; i < IFM2OFM3K.size(); ++i)
-    {
-        weights.d[i] = IFM2OFM3K[i];
-    }
-
-    Tensor d(IFM2D, {2, 2, 6});
-    Tensor &output = l->forward(d);
-
-    assertEquals(output.size(), OFM3IFM2D.size());
     for (int i = 0; i < output.size(); ++i)
     {
-        assertEqualsF(output[i], OFM3IFM2D[i], 1e-6);
+        std::cout << output[i] << std::endl;
+        assertEquals(output[i], O[i]);
     }
-    //printRowMajor(((DenseVectorN) output).getX(), 3, 4, 2);
+
 }
 
-void testBackward2to3() throw(Exception)
-{
-    TemporalConvolutionalLayer* l = new TemporalConvolutionalLayer(3, 2, 3, 2);
 
-    auto& weights = l->getParams();
-    for (int i = 0; i < IFM2OFM3K.size(); ++i)
-    {
-        weights.d[i] = IFM2OFM3K[i];
-    }
-
-    Tensor d(IFM2D, {2, 2, 6});
-    auto& ograd = l->forward(d);
-
-    for (int i = 0; i < ograd.size(); ++i)
-    {
-        ograd[i] /= 1000.;
-    }
-    auto& grads = l->backward(ograd, 0);
-
-    auto& gw = l->getParamGrads();
-
-    // Are gradients right?
-    double acc = 0.;
-    // Are weights right after gradients applied?
-    double accW = 0.;
-    for (int i = 0; i < gw.size(); ++i)
-    {
-        acc += gw.d[i] * gw.d[i];
-        weights.d[i] += gw.d[i];
-        accW += weights.d[i] * weights.d[i];
-        gw.d[i] = 0;
-    }
-    assertEqualsF(SQ_M_1000, acc, 1e-6);
-    assertEqualsF(SQ_M_W_1000, accW, 1e-6);
-
-
-    for (int i = 0; i < grads.size(); ++i)
-    {
-        assertEqualsF(OFM3IFM2G_1000[i], grads[i], 1e-6);
-    }
-}
 
 int main(int argc, char **argv)
 {
 
     try
     {
-
+        initCuBlas();
         EVAL(testForward());
-        EVAL(testForward2to1());
-        EVAL(testForward2to3());
-        EVAL(testBackward2to3());
+        //EVAL(testForward2to1());
+        ////EVAL(testForward2to3());
+        //EVAL(testBackward2to3());
         ///      EVAL(testBackward4to2());
         ///   EVAL(testBackward2to4());
         std::cout << "SUCCESS!" << std::endl;
@@ -212,6 +136,6 @@ int main(int argc, char **argv)
     {
         std::cout << "FAILURE: " << ex.getMessage() << std::endl;
     }
-
+    doneCuBlas();
     return 0;
 }

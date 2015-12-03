@@ -10,6 +10,7 @@ using namespace sgdtk;
 using namespace n3rd;
 
 #include <cassert>
+#include <n3rd/FFTOps.h>
 
 #define assertEquals(X, Y) assert(X == Y)
 
@@ -58,17 +59,6 @@ std::vector<double> xcorr(const std::vector<double>& x, const std::vector<double
 
 }
 
-int nextPowerOf2(int n)
-{
-    n--;
-    n |= n >> 1;
-    n |= n >> 2;
-    n |= n >> 4;
-    n |= n >> 8;
-    n |= n >> 16;
-    n++;
-    return n;
-}
 
 std::vector<double> fftfilt(const std::vector<double>& x, const std::vector<double> y, bool corr)
 {
@@ -76,7 +66,7 @@ std::vector<double> fftfilt(const std::vector<double>& x, const std::vector<doub
     int xsz = x.size();
     int ysz = y.size();
 
-    int wide = nextPowerOf2(xsz + ysz - 1);
+    int wide = FFTOps::nextPowerOf2(xsz + ysz - 1);
     int narrow = xsz - ysz + 1;
     std::vector<double> z(narrow);
 

@@ -2,11 +2,13 @@
 // Created by Daniel on 9/24/2015.
 //
 
-#include "n3rd/TemporalConvolutionalLayer.h"
+#include "n3rd/TemporalConvolutionalLayerFFT.h"
 
 using namespace n3rd;
 
-TemporalConvolutionalLayer::TemporalConvolutionalLayer(int nK, int kL, int kW, int embeddingSize)
+
+
+TemporalConvolutionalLayerFFT::TemporalConvolutionalLayerFFT(int nK, int kL, int kW, int embeddingSize)
 {
 
     weights.resize({nK, kL, embeddingSize, kW});
@@ -30,7 +32,7 @@ TemporalConvolutionalLayer::TemporalConvolutionalLayer(int nK, int kL, int kW, i
 
 }
 
-sgdtk::Tensor& TemporalConvolutionalLayer::forward(const sgdtk::Tensor& z)
+sgdtk::Tensor& TemporalConvolutionalLayerFFT::forward(const sgdtk::Tensor& z)
 {
 
     const int nK = weights.dims[0];
@@ -46,14 +48,14 @@ sgdtk::Tensor& TemporalConvolutionalLayer::forward(const sgdtk::Tensor& z)
     //z.constant(input.d, {inputFeatureMapSz, numFrames, embeddingSz});
     grads.resize({kL, embeddingSz, numFrames});
     output.resize({nK, embeddingSz, oT});
-    FilterOps::corr1(input, weights, biases, output); // biases
+    conv.fftfilt1(input, weights, biases, output);
 
     return output;
 
 }
 
 
-sgdtk::Tensor& TemporalConvolutionalLayer::backward(sgdtk::Tensor& chainGrad, double y)
+sgdtk::Tensor& TemporalConvolutionalLayerFFT::backward(sgdtk::Tensor& chainGrad, double y)
 {
     const int featureMapSz = weights.dims[0];
     const int embeddingSz = weights.dims[2];
@@ -77,7 +79,7 @@ sgdtk::Tensor& TemporalConvolutionalLayer::backward(sgdtk::Tensor& chainGrad, do
 
     int zpFrameSize = numFrames + kW - 1;
     int zp = zpFrameSize - convOutputSz;
-    grads.constant(0.0);
+    grads.constant(0);
     sgdtk::Tensor zpChainGrad;
 
     embed(chainGrad, 0, 0, zp, zpChainGrad);
@@ -87,6 +89,7 @@ sgdtk::Tensor& TemporalConvolutionalLayer::backward(sgdtk::Tensor& chainGrad, do
 
     std::vector<double> empty;
 
+    //conv.fftfilt1(zpChainGrad, tWeights, empty, grads, false);
     FilterOps::conv1(zpChainGrad, tWeights, empty, grads);
     FilterOps::corr1Weights(input, chainGrad, gradsW);
 

@@ -44,7 +44,7 @@ namespace n3rd
 
         }
 
-        TemporalConvolutionalLayer(int nK, int kL, int kW, int embeddingSize);
+        TemporalConvolutionalLayer(int nK, int kL, int kW, int embeddingSize = 1);
 
         sgdtk::Tensor& forward(const sgdtk::Tensor& z);
 

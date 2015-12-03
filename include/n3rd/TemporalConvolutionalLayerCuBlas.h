@@ -1,5 +1,5 @@
-#ifndef __N3RD_CPP_TEMPORALCONVOLUTIONALLAYERBLAS_H__
-#define __N3RD_CPP_TEMPORALCONVOLUTIONALLAYERBLAS_H__
+#ifndef __N3RD_CPP_TEMPORALCONVOLUTIONALLAYERCUBLAS_H__
+#define __N3RD_CPP_TEMPORALCONVOLUTIONALLAYERCUBLAS_H__
 
 #include <sgdtk/Tensor.h>
 #include "n3rd/Layer.h"
@@ -7,11 +7,12 @@
 #include <cmath>
 #include <cstdlib>
 #include "n3rd/FilterOps.h"
+#include <sgdtk/CudaTensor.h>
 
 namespace n3rd
 {
 
-    class TemporalConvolutionalLayerBlas : public Layer
+    class TemporalConvolutionalLayerCuBlas : public Layer
     {
         void reorderOutput(sgdtk::Tensor& unwrapped);
         void unwrapGradFromNextLayer(const sgdtk::Tensor& chainGrad, sgdtk::Tensor& unwrapped);
@@ -22,8 +23,14 @@ namespace n3rd
         int kW;
         int embedSz;
         int numFrames;
-        sgdtk::Tensor input;
+        //sgdtk::Tensor input;
         sgdtk::Tensor unwrappedInput;
+
+        sgdtk::CudaTensor dWeights;
+        sgdtk::CudaTensor dWeightGrads;
+        sgdtk::CudaTensor dUnwrappedInput;
+        //sgdtk::CudaTensor dGrads;
+
     public:
 
 
@@ -37,13 +44,13 @@ namespace n3rd
         ///Tensor grads;
         //int Current = 0;
 
-        TemporalConvolutionalLayerBlas()
+        TemporalConvolutionalLayerCuBlas()
         {
 
         }
 
-        TemporalConvolutionalLayerBlas(int nK, int kL, int kW);
-        ~TemporalConvolutionalLayerBlas()
+        TemporalConvolutionalLayerCuBlas(int nK, int kL, int kW);
+        ~TemporalConvolutionalLayerCuBlas()
         {
 
         }
@@ -55,7 +62,7 @@ namespace n3rd
         sgdtk::Tensor& backward(sgdtk::Tensor& chainGrad, double y);
 
         std::string getType() const
-        { return "TemporalConvolutionalLayerBlas"; }
+        { return "TemporalConvolutionalLayerCuBlas"; }
     };
 
 
