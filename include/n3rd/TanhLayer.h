@@ -5,24 +5,24 @@
 #ifndef __N3RD_CPP_TANHLAYER_H__
 #define __N3RD_CPP_TANHLAYER_H__
 
-#include "n3rd/Layer.h"
+#include "n3rd/AbstractLayer.h"
 #include <sgdtk/VectorN.h>
 #include <sgdtk/DenseVectorN.h>
 #include <cmath>
+#include <sgdtk/TensorI.h>
 #include <sgdtk/Tensor.h>
-
 namespace n3rd
 {
-    class TanhLayer : public Layer
+    class TanhLayer : public AbstractLayer<>
     {
     public:
 
         TanhLayer() {}
         ~TanhLayer() {}
 
-        sgdtk::Tensor& forward(const sgdtk::Tensor& input);
+        sgdtk::TensorI& forward(const sgdtk::TensorI& input);
 
-        sgdtk::Tensor& backward(sgdtk::Tensor& chainGrad, double y);
+        sgdtk::TensorI& backward(sgdtk::TensorI& chainGrad, double y);
 
         std::string getType() const { return "TanhLayer"; }
     };

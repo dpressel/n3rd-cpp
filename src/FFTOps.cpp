@@ -21,7 +21,7 @@ int FFTOps::nextPowerOf2(int n)
     n++;
     return n;
 }
-void FFTOps::fftfilt1(const Tensor& x, const Tensor& y, const std::vector<double> &biases, Tensor& z, bool corr)
+void FFTOps::fftfilt1(const Tensor& x, const Tensor& y, const Tensor &biases, Tensor& z, bool corr)
 {
 
     // For Tensor x, we have {featureMaps, embeddings, iT}

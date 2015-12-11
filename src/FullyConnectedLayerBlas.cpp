@@ -13,12 +13,13 @@ FullyConnectedLayerBlas::FullyConnectedLayerBlas(int outputLength, int inputLeng
     this->outputLength = outputLength;
     this->inputLength = inputLength;
     weights.resize({outputLength, this->inputLength});
-    gradsW.resize({outputLength, this->inputLength});
+    gradsW.resize(weights.dims);
+    weightAccum.resize(weights.dims, 0);
     grads.resize({this->inputLength});
     output.resize({outputLength});
     z.resize({inputLength});
-    biases.resize(outputLength);
-    biasGrads.resize(outputLength);
+    biases.resize({outputLength}, 0);
+    biasGrads.resize({outputLength}, 0);
 
     std::default_random_engine generator;
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
@@ -49,29 +50,36 @@ FullyConnectedLayerBlas::FullyConnectedLayerBlas(int outputLength, int inputLeng
 
 }
 
-sgdtk::Tensor& FullyConnectedLayerBlas::forward(const sgdtk::Tensor& input)
+sgdtk::TensorI& FullyConnectedLayerBlas::forward(const sgdtk::TensorI& input)
 {
 
     output.constant(0.);
-    std::copy(input.d.begin(), input.d.end(), z.d.begin());
-    cblas_dgemv(CblasColMajor, CblasNoTrans, outputLength, inputLength, 1.0, &weights.d[0], outputLength, &input.d[0], 1, 1.0, &output.d[0], 1);
+    const sgdtk::Tensor& inputT = (const sgdtk::Tensor&)input;
+
+    for (int i = 0, sz = input.size(); i < sz; ++i)
+    {
+        z[i] = inputT[i];
+    }
+
+    cblas_dgemv(CblasColMajor, CblasNoTrans, outputLength, inputLength, 1.0, &weights.d[0], outputLength, &inputT.d[0], 1, 1.0, &output.d[0], 1);
     return output;
 
 }
 
 
-sgdtk::Tensor& FullyConnectedLayerBlas::backward(sgdtk::Tensor& chainGrad, double y)
+sgdtk::TensorI& FullyConnectedLayerBlas::backward(sgdtk::TensorI& chainGrad, double y)
 {
 
     grads.constant(0.);
 
+    const sgdtk::Tensor& chainGradT = (const sgdtk::Tensor&)chainGrad;
     cblas_dgemv(CblasColMajor, CblasTrans, outputLength, inputLength, 1.0, &weights.d[0], outputLength,
-                &chainGrad.d[0], 1, 1.0, &grads.d[0], 1);
-    cblas_dger(CblasColMajor, outputLength, inputLength, 1.0, &chainGrad.d[0], 1, &z.d[0], 1, &gradsW.d[0], outputLength);
+                &chainGradT.d[0], 1, 1.0, &grads.d[0], 1);
+    cblas_dger(CblasColMajor, outputLength, inputLength, 1.0, &chainGradT.d[0], 1, &z.d[0], 1, &gradsW.d[0], outputLength);
 
     for (int i = 0; i < outputLength; ++i)
     {
-        biasGrads[i] = chainGrad.d[i];
+        biasGrads[i] = chainGradT.d[i];
     }
     return grads;
 

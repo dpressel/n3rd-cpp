@@ -88,7 +88,7 @@ int main(int argc, char** argv)
         if (params("type", "nbow") == "nbow")
         {
             learner =
-                    new SGDLearner(new LogLoss, Lambda, Eta, new NeuralNetModelFactory({
+                    new SGDLearner(new LogLoss, Lambda, Eta, new NeuralNetModelFactory<>({
                             new FullyConnectedLayer(100, vSz), new TanhLayer(), new FullyConnectedLayer(1, 100), new TanhLayer()
                     }));
         }

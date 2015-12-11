@@ -8,7 +8,7 @@
 #include <sgdtk/Types.h>
 #include <sgdtk/DenseVectorN.h>
 #include <cmath>
-#include "n3rd/Layer.h"
+#include "n3rd/AbstractLayer.h"
 #include "sgdtk/Tensor.h"
 #include <algorithm>
 namespace n3rd
@@ -29,7 +29,7 @@ namespace n3rd
      *
      * @author dpressel
      */
-    class KMaxPoolingLayer : public Layer
+    class KMaxPoolingLayer : public AbstractLayer<>
     {
         int k;
         int embeddingSz;
@@ -95,12 +95,12 @@ namespace n3rd
 
 
 
-        sgdtk::Tensor& forward(const sgdtk::Tensor& x);
+        sgdtk::TensorI& forward(const sgdtk::TensorI& x);
 
         // Since the output and input are the same for the max value, we can just apply the
         // max-pool value from the output
 
-        sgdtk::Tensor& backward(sgdtk::Tensor& chainGrad, double y);
+        sgdtk::TensorI& backward(sgdtk::TensorI& chainGrad, double y);
 
         std::string getType() const { return "KMaxPoolingLayer"; }
     };

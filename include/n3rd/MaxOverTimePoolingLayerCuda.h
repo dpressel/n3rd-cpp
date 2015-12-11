@@ -2,8 +2,8 @@
 // Created by Daniel on 9/24/2015.
 //
 
-#ifndef __N3RD_CPP_MAXOVERTIMEPOOLINGLAYER_H__
-#define __N3RD_CPP_MAXOVERTIMEPOOLINGLAYER_H__
+#ifndef __N3RD_CPP_MAXOVERTIMEPOOLINGLAYERCUDA_H__
+#define __N3RD_CPP_MAXOVERTIMEPOOLINGLAYERCUDA_H__
 
 #include <sgdtk/Types.h>
 #include <sgdtk/DenseVectorN.h>
@@ -11,6 +11,9 @@
 #include "n3rd/AbstractLayer.h"
 #include "sgdtk/Tensor.h"
 #include <algorithm>
+#include <sgdtk/CudaTensor.h>
+#include "n3rd/GPUOps.h"
+
 namespace n3rd
 {
 
@@ -24,12 +27,14 @@ namespace n3rd
  *
  * @author dpressel
  */
-    class MaxOverTimePoolingLayer : public AbstractLayer<>
+    class MaxOverTimePoolingLayerCuda : public AbstractLayer<sgdtk::CudaTensor>
     {
 
         int featureMapSz;
         int numFrames;
-        std::vector<int> origin;
+        sgdtk::CudaArray<int> origin;
+///        std::vector<int> origin;
+        ////sgdtk::CudaTensor dOutput;
     public:
 
 
@@ -38,17 +43,18 @@ namespace n3rd
         /**
          * Default Ctor, used prior to rehydrating model from file
          */
-        MaxOverTimePoolingLayer()
-        {
+        //MaxOverTimePoolingLayerCuda()
+        //{
+        //}
 
-        }
 
-
-        explicit MaxOverTimePoolingLayer(int numFeatureMaps) :
+        explicit MaxOverTimePoolingLayerCuda(int numFeatureMaps) :
                 featureMapSz(numFeatureMaps)
         {
-            output.resize({featureMapSz});
+            output.resize({featureMapSz, 1});
+            ////dOutput.resize({featureMapSz, 1});
             origin.resize(featureMapSz);
+            ////dOrigin.resize(featureMapSz);
         }
 
         int getFeatureMapSz()
@@ -61,7 +67,6 @@ namespace n3rd
             featureMapSz = numFeatureMaps;
         }
 
-        const std::vector<int>& getOrigin() const { return origin; }
 
         sgdtk::TensorI& forward(const sgdtk::TensorI& x);
 
@@ -70,7 +75,10 @@ namespace n3rd
 
         sgdtk::TensorI& backward(sgdtk::TensorI& chainGrad, double y);
 
-        std::string getType() const { return "MaxOverTimePoolingLayer"; }
+        std::string getType() const { return "MaxOverTimePoolingLayerCuda"; }
+
+        const sgdtk::CudaArray<int>& getOrigin() const { return origin; }
+
     };
 
 }

@@ -18,17 +18,17 @@ namespace n3rd
 
         static void corr1Weights(const sgdtk::Tensor& x, const sgdtk::Tensor& ygrad, sgdtk::Tensor& weightGrads);
 
-        static void corr1(const sgdtk::Tensor& data, const sgdtk::Tensor& kernels, const std::vector<double> &biases, sgdtk::Tensor& output);
+        static void corr1(const sgdtk::Tensor& data, const sgdtk::Tensor& kernels, const sgdtk::Tensor &biases, sgdtk::Tensor& output);
 
-        static void conv1(const sgdtk::Tensor& data, const sgdtk::Tensor& kernels, const std::vector<double> &biases, sgdtk::Tensor& output);
+        static void conv1(const sgdtk::Tensor& data, const sgdtk::Tensor& kernels, const sgdtk::Tensor &biases, sgdtk::Tensor& output);
 
-        static void conv2(const sgdtk::Tensor& data, const sgdtk::Tensor& kernels, const std::vector<double> &biases, sgdtk::Tensor& output);
+        static void conv2(const sgdtk::Tensor& data, const sgdtk::Tensor& kernels, const sgdtk::Tensor &biases, sgdtk::Tensor& output);
 
-        static void corr2(const sgdtk::Tensor& data, const sgdtk::Tensor& kernels, const std::vector<double> &biases, sgdtk::Tensor& output);
+        static void corr2(const sgdtk::Tensor& data, const sgdtk::Tensor& kernels, const sgdtk::Tensor &biases, sgdtk::Tensor& output);
 
 
 
-        static void fftfilt1(const sgdtk::Tensor& data, const sgdtk::Tensor& kernels, const std::vector<double> &biases, sgdtk::Tensor& output, bool corr = true);
+        static void fftfilt1(const sgdtk::Tensor& data, const sgdtk::Tensor& kernels, const sgdtk::Tensor &biases, sgdtk::Tensor& output, bool corr = true);
     };
 }
 

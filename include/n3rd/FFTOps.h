@@ -32,7 +32,7 @@ namespace n3rd
             destroyAllPlans();
             if (xy) fftw_free(xy);
         }
-        void fftfilt1(const sgdtk::Tensor& data, const sgdtk::Tensor& kernels, const std::vector<double> &biases, sgdtk::Tensor& output, bool corr = true);
+        void fftfilt1(const sgdtk::Tensor& data, const sgdtk::Tensor& kernels, const sgdtk::Tensor& biases, sgdtk::Tensor& output, bool corr = true);
     };
 }
 

@@ -90,13 +90,13 @@ double SQ_M_W_1000 = 11477.130271620003;
 void testForward() throw(Exception)
 {
     TemporalConvolutionalLayer *l = new TemporalConvolutionalLayer(1, 1, 3, 2);
-    auto &w = l->getParams();
+    Tensor &w = (Tensor&)l->getParams();
     for (int i = 0; i < K.size(); ++i)
     {
         w[i] = K[i];
     }
     Tensor d(D, {1, 2, 6});
-    Tensor &output = l->forward(d);
+    Tensor &output = (Tensor&)l->forward(d);
 
     assertEquals(output.size(), OFM1IFM1.size());
 
@@ -112,7 +112,7 @@ void testForward2to1() throw(Exception)
 
     TemporalConvolutionalLayer *l = new TemporalConvolutionalLayer(1, 2, 3, 2);
 
-    Tensor &weights = l->getParams();
+    Tensor &weights = (Tensor&)l->getParams();
     for (int i = 0; i < IFM2K.size(); ++i)
     {
         weights.d[i] = IFM2K[i];
@@ -120,7 +120,7 @@ void testForward2to1() throw(Exception)
 
 
     Tensor d(IFM2D, {2, 2, 6});
-    Tensor &output = l->forward(d);
+    Tensor &output = (Tensor&)l->forward(d);
 
     assertEquals(OFM1IFM2.size(), output.size());
     for (int i = 0; i < OFM1IFM2.size(); ++i)
@@ -135,14 +135,14 @@ void testForward2to3() throw(Exception)
 
     TemporalConvolutionalLayer *l = new TemporalConvolutionalLayer(3, 2, 3, 2);
 
-    Tensor &weights = l->getParams();
+    Tensor &weights = (Tensor&)l->getParams();
     for (int i = 0; i < IFM2OFM3K.size(); ++i)
     {
         weights.d[i] = IFM2OFM3K[i];
     }
 
     Tensor d(IFM2D, {2, 2, 6});
-    Tensor &output = l->forward(d);
+    Tensor &output = (Tensor&)l->forward(d);
 
     assertEquals(output.size(), OFM3IFM2D.size());
     for (int i = 0; i < output.size(); ++i)
@@ -156,22 +156,22 @@ void testBackward2to3() throw(Exception)
 {
     TemporalConvolutionalLayer* l = new TemporalConvolutionalLayer(3, 2, 3, 2);
 
-    auto& weights = l->getParams();
+    Tensor& weights = (Tensor&)l->getParams();
     for (int i = 0; i < IFM2OFM3K.size(); ++i)
     {
         weights.d[i] = IFM2OFM3K[i];
     }
 
     Tensor d(IFM2D, {2, 2, 6});
-    auto& ograd = l->forward(d);
+    Tensor& ograd = (Tensor&)l->forward(d);
 
     for (int i = 0; i < ograd.size(); ++i)
     {
         ograd[i] /= 1000.;
     }
-    auto& grads = l->backward(ograd, 0);
+    Tensor& grads = (Tensor&)l->backward(ograd, 0);
 
-    auto& gw = l->getParamGrads();
+    Tensor& gw = (Tensor&)l->getParamGrads();
 
     // Are gradients right?
     double acc = 0.;
@@ -179,9 +179,9 @@ void testBackward2to3() throw(Exception)
     double accW = 0.;
     for (int i = 0; i < gw.size(); ++i)
     {
-        acc += gw.d[i] * gw.d[i];
-        weights.d[i] += gw.d[i];
-        accW += weights.d[i] * weights.d[i];
+        acc += gw[i] * gw[i];
+        weights[i] += gw[i];
+        accW += weights[i] * weights[i];
         gw.d[i] = 0;
     }
     assertEqualsF(SQ_M_1000, acc, 1e-6);

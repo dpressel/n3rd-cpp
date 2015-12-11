@@ -132,6 +132,12 @@ namespace sgdtk
         copyArrayToGPU(gpuPtr, hostArray);
         return gpuPtr;
     }
+
+    template<typename T> void copyGPUToGPU(T* target, T* source, int numElems)
+    {
+        TRY_CUDA(cudaMemcpy(target, source, sizeof(T)*numElems, cudaMemcpyDeviceToDevice));
+    }
+
 /*
     inline void setTensorDescriptor(cudnnTensorDescriptor_t & descr, const Tensor& hostTensor)
     {

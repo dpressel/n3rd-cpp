@@ -30,8 +30,8 @@ void testForward() throw(Exception)
 {
     FullyConnectedLayer *fc = new FullyConnectedLayer(2, 4);
 
-    auto &b = fc->getBiasParams();
-    auto &w = fc->getParams();
+    Tensor &b = (Tensor&)fc->getBiasParams();
+    Tensor &w = (Tensor&)fc->getParams();
     assertEquals(K.size(), w.size());
 
 
@@ -53,7 +53,7 @@ void testForward() throw(Exception)
 
 
     Tensor d(V_4, {4});
-    auto &o = fc->forward(d);
+    Tensor &o = (Tensor&)fc->forward(d);
 
     assertEquals(o.size(), V_2.size());
 
@@ -70,8 +70,8 @@ void testForward() throw(Exception)
 void testBackward4to2() throw(Exception)
 {
     auto *fc = new FullyConnectedLayer(2, 4);
-    auto &w = fc->getParams();
-    auto &b = fc->getBiasParams();
+    Tensor &w = (Tensor&)fc->getParams();
+    Tensor &b = (Tensor&)fc->getBiasParams();
 
 
     assertEquals(K.size(), w.size());
@@ -98,7 +98,7 @@ void testBackward4to2() throw(Exception)
     Tensor d(V_4, {4});
     fc->forward(d);
 
-    auto &v = fc->backward(error, 0.);
+    Tensor &v = (Tensor&)fc->backward(error, 0.);
 
     std::cout << "Deltas" << std::endl;
     assertEquals(D4_X.size(), v.size());
@@ -111,7 +111,7 @@ void testBackward4to2() throw(Exception)
     std::cout << std::endl << std::endl;
 
 
-    auto &gw = fc->getParamGrads();
+    Tensor &gw = (Tensor&)fc->getParamGrads();
 
     assertEquals(W_G.size(), gw.size());
     std::cout << "Wg" << std::endl;
@@ -128,8 +128,8 @@ void testBackward4to2() throw(Exception)
 void testBackward2to4() throw(Exception)
 {
     FullyConnectedLayer* fc = new FullyConnectedLayer(4, 2);
-    auto& w = fc->getParams();
-    auto& b = fc->getBiasParams();
+    Tensor& w = (Tensor&)fc->getParams();
+    Tensor& b = (Tensor&)fc->getBiasParams();
     assertEquals(K.size(), w.size());
 
     int n = 0;
@@ -153,7 +153,7 @@ void testBackward2to4() throw(Exception)
     Tensor error(V_4, {4});
 
     fc->forward(d);
-    Tensor& v = fc->backward(error, 0.);
+    Tensor& v = (Tensor&)fc->backward(error, 0.);
 
     for (int i = 0; i < v.size(); ++i)
     {
@@ -162,7 +162,7 @@ void testBackward2to4() throw(Exception)
     }
     std::cout << std::endl;
 
-    Tensor& gw = fc->getParamGrads();
+    Tensor& gw = (Tensor&)fc->getParamGrads();
     assertEquals(W_G2.size(), gw.size());
 
     for (int i = 0; i < gw.size(); ++i)

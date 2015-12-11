@@ -31,10 +31,10 @@ void testForward() throw(Exception)
     FullyConnectedLayerBlas *nfc = new FullyConnectedLayerBlas(2, 4);
     FullyConnectedLayer *fc = new FullyConnectedLayer(2, 4);
 
-    auto &b = fc->getBiasParams();
-    auto &w = fc->getParams();
-    auto &nb = nfc->getBiasParams();
-    auto &nw = nfc->getParams();
+    Tensor &b = (Tensor&)fc->getBiasParams();
+    Tensor &w = (Tensor&)fc->getParams();
+    Tensor &nb = (Tensor&)nfc->getBiasParams();
+    Tensor &nw = (Tensor&)nfc->getParams();
 
     assertEquals(K.size(), w.size());
 
@@ -59,8 +59,8 @@ void testForward() throw(Exception)
 
 
     Tensor d(V_4, {4});
-    auto &o = fc->forward(d);
-    auto &no = nfc->forward(d);
+    Tensor &o = (Tensor&)fc->forward(d);
+    Tensor &no = (Tensor&)nfc->forward(d);
     assertEquals(o.size(), V_2.size());
     assertEquals(no.size(), V_2.size());
 
@@ -78,13 +78,13 @@ void testForward() throw(Exception)
 void testBackward4to2() throw(Exception)
 {
     auto *fc = new FullyConnectedLayer(2, 4);
-    auto &w = fc->getParams();
-    auto &b = fc->getBiasParams();
+    Tensor &w = (Tensor&)fc->getParams();
+    Tensor &b = (Tensor&)fc->getBiasParams();
 
 
     auto *nfc = new FullyConnectedLayerBlas(2, 4);
-    auto &nw = nfc->getParams();
-    auto &nb = nfc->getBiasParams();
+    Tensor &nw = (Tensor&)nfc->getParams();
+    Tensor &nb = (Tensor&)nfc->getBiasParams();
 
     assertEquals(K.size(), w.size());
 
@@ -112,11 +112,11 @@ void testBackward4to2() throw(Exception)
     Tensor d(V_4, {4});
     fc->forward(d);
 
-    auto &v = fc->backward(error, 0.);
+    auto &v = (Tensor&)fc->backward(error, 0.);
 
     nfc->forward(d);
 
-    auto &nv = nfc->backward(error, 0.);
+    auto &nv = (Tensor&)nfc->backward(error, 0.);
 
     std::cout << "Deltas" << std::endl;
     assertEquals(D4_X.size(), v.size());
@@ -130,8 +130,8 @@ void testBackward4to2() throw(Exception)
     std::cout << std::endl << std::endl;
 
 
-    auto &gw = fc->getParamGrads();
-    auto &ngw = nfc->getParamGrads();
+    Tensor &gw = (Tensor&)fc->getParamGrads();
+    Tensor &ngw = (Tensor&)nfc->getParamGrads();
     assertEquals(W_G.size(), gw.size());
     assertEquals(gw.size(), ngw.size());
 
@@ -150,12 +150,12 @@ void testBackward4to2() throw(Exception)
 void testBackward2to4() throw(Exception)
 {
     FullyConnectedLayer* fc = new FullyConnectedLayer(4, 2);
-    auto& w = fc->getParams();
-    auto& b = fc->getBiasParams();
+    Tensor& w = (Tensor&)fc->getParams();
+    Tensor& b = (Tensor&)fc->getBiasParams();
     assertEquals(K.size(), w.size());
     FullyConnectedLayerBlas* nfc = new FullyConnectedLayerBlas(4, 2);
-    auto& nw = nfc->getParams();
-    auto& nb = nfc->getBiasParams();
+    Tensor& nw = (Tensor&)nfc->getParams();
+    Tensor& nb = (Tensor&)nfc->getBiasParams();
 
     assertEquals(K.size(), nw.size());
 
@@ -166,8 +166,8 @@ void testBackward2to4() throw(Exception)
         {
             int idx = i * M + j;
             int cIdx = j * N + i;
-            nw.d[cIdx] = K[n];
-            w.d[idx] = K[n];
+            nw[cIdx] = K[n];
+            w[idx] = K[n];
             n++;
         }
     }
@@ -180,11 +180,11 @@ void testBackward2to4() throw(Exception)
     Tensor error(V_4, {V_4.size()});
     Tensor d(V_2, {V_2.size()});
     fc->forward(d);
-    auto& v = fc->backward(error, 0.);
+    Tensor& v = (Tensor&)fc->backward(error, 0.);
 
         //d = new DenseVectorN(V_2);
     nfc->forward(d);
-    auto& nv = nfc->backward(error, 0.);
+    Tensor& nv = (Tensor&)nfc->backward(error, 0.);
 
     for (int i = 0; i < v.size(); ++i)
     {
@@ -193,8 +193,8 @@ void testBackward2to4() throw(Exception)
     }
     std::cout << std::endl;
 
-    auto& gw = fc->getParamGrads();
-    auto& ngw = nfc->getParamGrads();
+    Tensor& gw = (Tensor&)fc->getParamGrads();
+    Tensor& ngw = (Tensor&)nfc->getParamGrads();
 
     assertEquals(gw.size(), ngw.size());
 
@@ -202,8 +202,8 @@ void testBackward2to4() throw(Exception)
     {
         for (int j = 0; j < M; ++j)
         {
-            assertEqualsF(ngw.d[j * N + i], gw.d[i * M + j], 1e-6);
-            std::cout << gw.d[i * M + j] << " ";
+            assertEqualsF(ngw[j * N + i], gw[i * M + j], 1e-6);
+            std::cout << gw[i * M + j] << " ";
         }
         std::cout << std::endl;
 

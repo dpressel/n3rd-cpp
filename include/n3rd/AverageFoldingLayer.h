@@ -5,13 +5,13 @@
 #ifndef __N3RD_CPP_AVERAGEFOLDINGLAYER_H__
 #define __N3RD_CPP_AVERAGEFOLDINGLAYER_H__
 
-#include "n3rd/Layer.h"
+#include "n3rd/AbstractLayer.h"
 #include <sgdtk/DenseVectorN.h>
 #include <sgdtk/VectorN.h>
 #include <sgdtk/Tensor.h>
 namespace n3rd
 {
-    class AverageFoldingLayer : public Layer
+    class AverageFoldingLayer : public AbstractLayer<>
     {
 
         int embeddingSz;
@@ -31,9 +31,9 @@ namespace n3rd
         }
 
 
-        sgdtk::Tensor& forward(const sgdtk::Tensor& x);
+        sgdtk::TensorI& forward(const sgdtk::TensorI& x);
 
-        sgdtk::Tensor& backward(sgdtk::Tensor& chainGrad, double y);
+        sgdtk::TensorI& backward(sgdtk::TensorI& chainGrad, double y);
 
 
         int getEmbeddingSz() const

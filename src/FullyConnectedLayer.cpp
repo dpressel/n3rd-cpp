@@ -12,9 +12,11 @@ FullyConnectedLayer::FullyConnectedLayer(int outputLength, int inputLength)
     this->outputLength = outputLength;
     this->inputLength = inputLength;
     weights.resize({outputLength, this->inputLength});
-    gradsW.resize({outputLength, this->inputLength});
-    biases.resize(outputLength, 0.);
-    biasGrads.resize(outputLength, 0.);
+    weightAccum.resize(weights.dims, 0);
+    gradsW.resize(weights.dims);
+
+    biases.resize({outputLength}, 0.);
+    biasGrads.resize({outputLength}, 0.);
     std::default_random_engine generator;
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
     double stdv = 1. / std::sqrt(inputLength);
@@ -60,16 +62,17 @@ sgdtk::Tensor& FullyConnectedLayer::fX(const Tensor& x, const Tensor& w)
 }
 
 
-sgdtk::Tensor& FullyConnectedLayer::backward(sgdtk::Tensor& chainGrad, double y)
+sgdtk::TensorI& FullyConnectedLayer::backward(sgdtk::TensorI& chainGrad, double y)
 {
 
+    const sgdtk::Tensor& chainGradT = (const sgdtk::Tensor&)chainGrad;
     int zLength = z.size();
     int howLong = std::min(inputLength, zLength);
 
     grads.constant(0.);
     for (int i = 0, ibase = 0; i < outputLength; ++i, ibase += inputLength)
     {
-        double g = chainGrad[i];
+        double g = chainGradT[i];
         for (int j = 0; j < howLong; ++j)
         {
 

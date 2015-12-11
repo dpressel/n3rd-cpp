@@ -8,9 +8,10 @@ using namespace n3rd;
 using namespace sgdtk;
 #include <iostream>
 
-sgdtk::Tensor& KMaxPoolingLayer::forward(const sgdtk::Tensor& z)
+sgdtk::TensorI& KMaxPoolingLayer::forward(const sgdtk::TensorI& z)
 {
 
+    const sgdtk::Tensor& zT = (const sgdtk::Tensor&)z;
     numFrames = z.size() / embeddingSz / featureMapSz;
     const int sz = featureMapSz * k * embeddingSz;
     grads.resize({featureMapSz, embeddingSz, numFrames});
@@ -40,7 +41,7 @@ sgdtk::Tensor& KMaxPoolingLayer::forward(const sgdtk::Tensor& z)
             for (int i = 0; i < numFrames; ++i)
             {
                 int inAddr = ibase + i;
-                offsets[i] = sgdtk::Offset(inAddr, z[inAddr]);
+                offsets[i] = sgdtk::Offset(inAddr, zT[inAddr]);
             }
 
             std::sort(offsets.begin(), offsets.end(), maxValue);
@@ -63,9 +64,9 @@ sgdtk::Tensor& KMaxPoolingLayer::forward(const sgdtk::Tensor& z)
 
 // Since the output and input are the same for the max value, we can just apply the
 // max-pool value from the output
-sgdtk::Tensor& KMaxPoolingLayer::backward(sgdtk::Tensor& chainGrad, double y)
+sgdtk::TensorI& KMaxPoolingLayer::backward(sgdtk::TensorI& chainGrad, double y)
 {
-
+    const sgdtk::Tensor& chainGradT = (const sgdtk::Tensor&)chainGrad;
     grads.constant(0.);
     for (int l = 0, lbase = 0; l < featureMapSz; ++l, lbase += embeddingSz)
     {
@@ -89,7 +90,7 @@ sgdtk::Tensor& KMaxPoolingLayer::backward(sgdtk::Tensor& chainGrad, double y)
                 {
                     continue;
                 }
-                grads[inAddr] = chainGrad[outAddr];
+                grads[inAddr] = chainGradT[outAddr];
             }
         }
     }

@@ -6,9 +6,10 @@
 
 using namespace n3rd;
 
-sgdtk::Tensor& AverageFoldingLayer::forward(const sgdtk::Tensor& z)
+sgdtk::TensorI& AverageFoldingLayer::forward(const sgdtk::TensorI& z)
 {
 
+    const sgdtk::Tensor& tensor = (const sgdtk::Tensor&)z;
     numFrames = z.size() / embeddingSz / featureMapSz;
     const int outEmbeddingSz = embeddingSz / k;
 
@@ -31,7 +32,7 @@ sgdtk::Tensor& AverageFoldingLayer::forward(const sgdtk::Tensor& z)
                 for (int m = 0; m < k; ++m)
                 {
                     int iAddr = (libase + j + m) * numFrames + i;
-                    output[oAddr] += z[iAddr];
+                    output[oAddr] += tensor[iAddr];
                 }
                 output[oAddr] *= div;
             }
@@ -43,8 +44,9 @@ sgdtk::Tensor& AverageFoldingLayer::forward(const sgdtk::Tensor& z)
 // Since the output and input are the same for the max value, we can just apply the
 // max-pool value from the output
 
-sgdtk::Tensor& AverageFoldingLayer::backward(sgdtk::Tensor& chainGrad, double y)
+sgdtk::TensorI& AverageFoldingLayer::backward(sgdtk::TensorI& chainGrad, double y)
 {
+    const sgdtk::Tensor& chainGradT = (const sgdtk::Tensor&)chainGrad;
     auto div = 1.0 / k;
     int outEmbeddingSz = embeddingSz / k;
     grads.constant(0.);
@@ -57,7 +59,7 @@ sgdtk::Tensor& AverageFoldingLayer::backward(sgdtk::Tensor& chainGrad, double y)
             for (int i = 0; i < numFrames; ++i)
             {
                 int oAddr = obase + i;
-                double value = chainGrad[oAddr] * div;
+                double value = chainGradT[oAddr] * div;
                 for (int m = 0; m < k; ++m)
                 {
                     int iAddr = (libase + j + m) * numFrames + i;

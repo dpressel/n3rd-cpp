@@ -3,7 +3,7 @@
 
 #include "n3rd/Layer.h"
 #include <sgdtk/Model.h>
-#include <sgdtk/LinearModel.h>
+#include <sgdtk/WeightModel.h>
 #include <sgdtk/FeatureVector.h>
 
 #include <cmath>
@@ -24,18 +24,27 @@ namespace n3rd
      *
      * @author dpressel
      */
-    class NeuralNetModel : public sgdtk::LinearModel
+    class NeuralNetModel : public sgdtk::WeightModel
     {
+    protected:
+        virtual sgdtk::TensorI* makeLossTensor(double dLoss)
+        {
+            return new sgdtk::Tensor({dLoss}, {1});
+        }
 
-        std::vector<Layer *> layers;
+        virtual void updateBiasWeights(Layer *layer, double eta) const;
+
+        virtual void adagradUpdate(Layer *layer, double eta, double lambda) const;
+
+    public:
+        std::vector<Layer*> layers;
         bool scaleOutput = true;
-        std::vector<std::vector<double>> gg;
 
         // We could allow these as tuning parameters to control the weighting on Adagrad, but for now, just do 1, 1
-        const double ALPHA = 1.;
-        const double BETA = 1.;
         const double EPS = 1e-8;
-    public:
+        void updateLayerWeights(Layer *layer, int k, double eta, double lambda);
+
+
         /**
          * Default constructor, needed to reincarnate models
          */
@@ -51,11 +60,11 @@ namespace n3rd
          * @param layers A stack of network layers
          * @param scaleOutput Scale and center data?
          */
-        NeuralNetModel(std::vector<Layer *> layers, bool scaleOutput)
+        NeuralNetModel(std::vector<Layer*> layers, bool scaleOutput)
         {
             this->layers = layers;
             this->scaleOutput = scaleOutput;
-            gg.resize(layers.size());
+
 
         }
         virtual ~NeuralNetModel()
@@ -67,7 +76,7 @@ namespace n3rd
         }
 
         // Here ya go!
-        std::vector<Layer *> getLayers()
+        std::vector<Layer*> getLayers()
         {
             return layers;
         }
@@ -113,7 +122,7 @@ namespace n3rd
          * @param x A feature vector
          * @return A result
          */
-        sgdtk::Tensor forward(const sgdtk::Tensor& x);
+        sgdtk::TensorI& forward(sgdtk::TensorI& x);
 
         /**
          * Give back the the output layer of the network, scaling if required
@@ -131,10 +140,23 @@ namespace n3rd
          * @return Nothing!
          */
 
-        Model* prototype()
+        virtual Model* prototype() const
         {
             return nullptr;
         }
+
+        // TODO
+        void load(std::string file)
+        {
+
+        }
+
+// TODO
+        void save(std::string file)
+        {
+
+        }
+
     };
 
 }

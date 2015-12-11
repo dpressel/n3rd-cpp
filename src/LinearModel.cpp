@@ -34,13 +34,14 @@ double LinearModel::predict(const FeatureVector *fv)
     auto& vecN = fv->getX();
     auto dot = weights.dot(vecN);
     */
-    double dot = 0.;
     const Offsets &sv = fv->getNonZeroOffsets();
-
-    for (Offset p : sv)
-    {
-        dot += weights.x[p.first] * p.second;
-    }
+    double dot = weights.sparseDot(sv);
     return dot / wdiv + wbias;
 }
 
+std::vector<double> LinearModel::score(const sgdtk::FeatureVector *fv)
+{
+    return {
+            predict(fv)
+    };
+}

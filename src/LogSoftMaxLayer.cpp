@@ -17,8 +17,9 @@ template<typename Container_T> double logSum(const Container_T& v)
     return m + std::log(s);
 }
 
-sgdtk::Tensor& LogSoftMaxLayer::forward(const sgdtk::Tensor& z)
+sgdtk::TensorI& LogSoftMaxLayer::forward(const sgdtk::TensorI& z)
 {
+    const sgdtk::Tensor& zT = (const sgdtk::Tensor&)z;
     int sz = z.size();
     if (sz != output.size())
     {
@@ -26,22 +27,23 @@ sgdtk::Tensor& LogSoftMaxLayer::forward(const sgdtk::Tensor& z)
         grads.resize({sz});
     }
 
-    auto logsum = logSum(z);
+    auto logsum = logSum(zT);
 
     for (int i = 0; i < sz; ++i)
     {
-        output[i] = z[i] - logsum;
+        output[i] = zT[i] - logsum;
     }
 
     return output;
 }
 
 
-sgdtk::Tensor& LogSoftMaxLayer::backward(sgdtk::Tensor& chainGrad, double y)
+sgdtk::TensorI& LogSoftMaxLayer::backward(sgdtk::TensorI& chainGrad, double y)
 {
+    const sgdtk::Tensor& chainGradT = (const sgdtk::Tensor&)chainGrad;
     int sz = output.size();
     // Only will be one thing above us, a loss function
-    auto sum = chainGrad[0];
+    auto sum = chainGradT[0];
     int yidx = (int)(y - 1);
     for (int i = 0; i < sz; ++i)
     {

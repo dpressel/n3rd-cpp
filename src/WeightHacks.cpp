@@ -15,7 +15,7 @@ const static double WEIGHTS[] = { 0.55378, 0.85794, 0.28704, 0.77357, 0.60346, 0
 const int WLENGTH = 3000;
 void nonRandomWeightsTConv(Layer* layer)
 {
-    auto& weights = layer->getParams();
+    Tensor& weights = (Tensor&)layer->getParams();
 
     for (int i = 0; i < weights.size(); ++i)
     {
@@ -39,7 +39,7 @@ void nonRandomWeightsFC(Layer* layer)
         FullyConnectedLayer* fc = (FullyConnectedLayer*)layer;
         inputLength = fc->getInputLength();
     }
-    auto& weights = layer->getParams();
+    Tensor& weights = (Tensor&)layer->getParams();
     for (int i = 0; i < weights.size(); ++i)
     {
         double stdv = 1. / std::sqrt(inputLength);

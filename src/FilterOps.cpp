@@ -128,7 +128,7 @@ void FilterOps::corr1Weights(const Tensor &x, const Tensor &ygrad, Tensor &weigh
 }
 
 
-void FilterOps::corr1(const Tensor &data, const Tensor &kernels, const std::vector<double> &biases, Tensor &output)
+void FilterOps::corr1(const Tensor& data, const Tensor& kernels, const Tensor& biases, Tensor &output)
 {
     const int iT = data.dims[2];
     const int embedSz = data.dims[1];
@@ -171,7 +171,7 @@ void FilterOps::corr1(const Tensor &data, const Tensor &kernels, const std::vect
 }
 
 
-void FilterOps::conv1(const Tensor &data, const Tensor &kernels, const std::vector<double> &biases, Tensor &output)
+void FilterOps::conv1(const Tensor &data, const Tensor &kernels, const Tensor &biases, Tensor &output)
 {
     const int iT = data.dims[2];
     const int embedSz = data.dims[1];
@@ -220,7 +220,7 @@ void FilterOps::conv1(const Tensor &data, const Tensor &kernels, const std::vect
 
 // In this case, we have several feature maps, each is a kernel of
 
-void FilterOps::conv2(const Tensor &data, const Tensor &kernels, const std::vector<double> &biases, Tensor &output) {
+void FilterOps::conv2(const Tensor &data, const Tensor &kernels, const Tensor &biases, Tensor &output) {
     const int dH = data.dims[1];
     const int dW = data.dims[2];
     const int nK = kernels.dims[0];
@@ -261,7 +261,7 @@ void FilterOps::conv2(const Tensor &data, const Tensor &kernels, const std::vect
 
 }
 
-void FilterOps::corr2(const Tensor &data, const Tensor &kernels, const std::vector<double> &biases, Tensor &output) {
+void FilterOps::corr2(const Tensor &data, const Tensor &kernels, const Tensor &biases, Tensor &output) {
     const int dH = data.dims[1];
     const int dW = data.dims[2];
     const int nK = kernels.dims[0];
@@ -304,7 +304,7 @@ void FilterOps::corr2(const Tensor &data, const Tensor &kernels, const std::vect
 
 }
 /*
-void FilterOps::fftfilt1(const Tensor& x, const Tensor& y, const std::vector<double> &biases, Tensor& z, bool corr)
+void FilterOps::fftfilt1(const Tensor& x, const Tensor& y, const Tensor &biases, Tensor& z, bool corr)
 {
 
     // For Tensor x, we have {featureMaps, embeddings, iT}

@@ -6,7 +6,7 @@
 #define __N3RD_CPP_TEMPORALCONVOLUTIONALLAYER_H__
 
 #include <sgdtk/Tensor.h>
-#include "n3rd/Layer.h"
+#include "n3rd/AbstractLayer.h"
 #include "sgdtk/DenseVectorN.h"
 #include <cmath>
 #include <cstdlib>
@@ -25,7 +25,7 @@ namespace n3rd
  * we can do the Kalchbrenner/Blunsom thing as well. If you want to do the Torch approach, just pass and embeddingSz
  * of 1 and handle everything else outside
  */
-    class TemporalConvolutionalLayer : public Layer
+    class TemporalConvolutionalLayer : public AbstractLayer<>
     {
     public:
 
@@ -46,10 +46,10 @@ namespace n3rd
 
         TemporalConvolutionalLayer(int nK, int kL, int kW, int embeddingSize = 1);
 
-        sgdtk::Tensor& forward(const sgdtk::Tensor& z);
+        sgdtk::TensorI& forward(const sgdtk::TensorI& z);
 
 
-        sgdtk::Tensor& backward(sgdtk::Tensor& chainGrad, double y);
+        sgdtk::TensorI& backward(sgdtk::TensorI& chainGrad, double y);
 
         std::string getType() const
         { return "TemporalConvolutionalLayer"; }

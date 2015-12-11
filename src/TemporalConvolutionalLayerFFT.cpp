@@ -12,9 +12,10 @@ TemporalConvolutionalLayerFFT::TemporalConvolutionalLayerFFT(int nK, int kL, int
 {
 
     weights.resize({nK, kL, embeddingSize, kW});
-    gradsW.resize({nK, kL, embeddingSize, kW});
-    biases.resize(nK);
-    biasGrads.resize(nK);
+    gradsW.resize(weights.dims);
+    weightAccum.resize(weights.dims, 0);
+    biases.resize({nK}, 0);
+    biasGrads.resize({nK}, 0);
 
     std::default_random_engine generator;
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
@@ -32,7 +33,7 @@ TemporalConvolutionalLayerFFT::TemporalConvolutionalLayerFFT(int nK, int kL, int
 
 }
 
-sgdtk::Tensor& TemporalConvolutionalLayerFFT::forward(const sgdtk::Tensor& z)
+sgdtk::TensorI& TemporalConvolutionalLayerFFT::forward(const sgdtk::TensorI& z)
 {
 
     const int nK = weights.dims[0];
@@ -43,7 +44,8 @@ sgdtk::Tensor& TemporalConvolutionalLayerFFT::forward(const sgdtk::Tensor& z)
     const int numFrames = z.size() / embeddingSz / kL;
     const int oT = numFrames - kW + 1;
 
-    input = z;
+    const sgdtk::Tensor& zT = (const sgdtk::Tensor&)z;
+    input = zT;
     input.reshape({kL, embeddingSz, numFrames});
     //z.constant(input.d, {inputFeatureMapSz, numFrames, embeddingSz});
     grads.resize({kL, embeddingSz, numFrames});
@@ -55,8 +57,9 @@ sgdtk::Tensor& TemporalConvolutionalLayerFFT::forward(const sgdtk::Tensor& z)
 }
 
 
-sgdtk::Tensor& TemporalConvolutionalLayerFFT::backward(sgdtk::Tensor& chainGrad, double y)
+sgdtk::TensorI& TemporalConvolutionalLayerFFT::backward(sgdtk::TensorI& chainGrad, double y)
 {
+    const sgdtk::Tensor& chainGradT = (const sgdtk::Tensor&)chainGrad;
     const int featureMapSz = weights.dims[0];
     const int embeddingSz = weights.dims[2];
     const int kW = weights.dims[3];
@@ -72,7 +75,7 @@ sgdtk::Tensor& TemporalConvolutionalLayerFFT::backward(sgdtk::Tensor& chainGrad,
     {
         for (int i = 0; i < stride; ++i)
         {
-            this->biasGrads[l] += chainGrad[l * stride + i];
+            this->biasGrads[l] += chainGradT[l * stride + i];
         }
         this->biasGrads[l] /= embeddingSz;
     }
@@ -82,16 +85,16 @@ sgdtk::Tensor& TemporalConvolutionalLayerFFT::backward(sgdtk::Tensor& chainGrad,
     grads.constant(0);
     sgdtk::Tensor zpChainGrad;
 
-    embed(chainGrad, 0, 0, zp, zpChainGrad);
+    embed(chainGradT, 0, 0, zp, zpChainGrad);
     sgdtk::Tensor tWeights;
 
     transposeWeight4D(weights, tWeights);
 
-    std::vector<double> empty;
+    sgdtk::Tensor empty;
 
     //conv.fftfilt1(zpChainGrad, tWeights, empty, grads, false);
     FilterOps::conv1(zpChainGrad, tWeights, empty, grads);
-    FilterOps::corr1Weights(input, chainGrad, gradsW);
+    FilterOps::corr1Weights(input, chainGradT, gradsW);
 
     //// GRADIENT CHECK
     ////gradCheck(chainGradTensor);

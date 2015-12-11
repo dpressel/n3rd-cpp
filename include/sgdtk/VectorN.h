@@ -20,6 +20,8 @@ namespace sgdtk
 
         virtual double dot(const VectorN &vec) const = 0;
 
+        virtual double sparseDot(const Offsets &offsets) const = 0;
+
         virtual Offsets getNonZeroOffsets() const = 0;
 
         virtual double at(int i) const = 0;

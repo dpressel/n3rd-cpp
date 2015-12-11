@@ -43,6 +43,9 @@ namespace sgdtk
          */
         virtual double predict(const FeatureVector *fv) = 0;
 
+
+        virtual std::vector<double> score(const sgdtk::FeatureVector* fv) = 0;
+
         /**
          * Create a deep copy of this
          * @return clone

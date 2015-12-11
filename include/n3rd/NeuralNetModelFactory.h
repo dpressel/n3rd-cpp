@@ -11,9 +11,9 @@
 #include "n3rd/NeuralNetModel.h"
 namespace n3rd
 {
-    class NeuralNetModelFactory : public sgdtk::ModelFactory
+    template<typename ModelClass = NeuralNetModel> class NeuralNetModelFactory : public sgdtk::ModelFactory
     {
-
+        typedef sgdtk::Tensor TensorT;
         std::vector<Layer*> layerArray;
     public:
         NeuralNetModelFactory()
@@ -38,7 +38,7 @@ namespace n3rd
             {
                 scale = true;
             }
-            return new NeuralNetModel(layerArray, scale);
+            return new ModelClass(layerArray, scale);
         }
 
         NeuralNetModelFactory& addLayer(Layer* layer)

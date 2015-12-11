@@ -2,8 +2,9 @@
 
 using namespace n3rd;
 
-sgdtk::Tensor& SigmoidLayer::forward(const sgdtk::Tensor& z)
+sgdtk::TensorI& SigmoidLayer::forward(const sgdtk::TensorI& z)
 {
+    const sgdtk::Tensor& zT = (const sgdtk::Tensor&)z;
     int sz = z.size();
 
     output.resize({sz});
@@ -11,18 +12,19 @@ sgdtk::Tensor& SigmoidLayer::forward(const sgdtk::Tensor& z)
 
     for (int i = 0; i < sz; ++i)
     {
-        output[i] = sigmoid(z[i]);
+        output[i] = sigmoid(zT[i]);
     }
     return output;
 }
 
-sgdtk::Tensor& SigmoidLayer::backward(sgdtk::Tensor& chainGrad, double y)
+sgdtk::TensorI& SigmoidLayer::backward(sgdtk::TensorI& chainGrad, double y)
 {
+    const sgdtk::Tensor& chainGradT = (const sgdtk::Tensor&)chainGrad;
     int sz = chainGrad.size();
 
     for (int i = 0; i < sz; ++i)
     {
-        grads[i] = chainGrad[i] * (1 - output[i]) * output[i];
+        grads[i] = chainGradT[i] * (1 - output[i]) * output[i];
     }
     return grads;
 }

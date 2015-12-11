@@ -2,8 +2,9 @@
 
 using namespace n3rd;
 
-sgdtk::Tensor& ReLULayer::forward(const sgdtk::Tensor& z)
+sgdtk::TensorI& ReLULayer::forward(const sgdtk::TensorI& z)
 {
+    const sgdtk::Tensor& zT = (const sgdtk::Tensor&)z;
     int sz = z.size();
 
     if (sz != output.size())
@@ -17,18 +18,19 @@ sgdtk::Tensor& ReLULayer::forward(const sgdtk::Tensor& z)
 
     for (int i = 0; i < sz; ++i)
     {
-        output[i] = relu(z[i]);
+        output[i] = relu(zT[i]);
     }
     return output;
 }
 
-sgdtk::Tensor& ReLULayer::backward(sgdtk::Tensor& chainGrad, double y)
+sgdtk::TensorI& ReLULayer::backward(sgdtk::TensorI& chainGrad, double y)
 {
+    const sgdtk::Tensor& chainGradT = (const sgdtk::Tensor&)chainGrad;
     int sz = chainGrad.size();
 
     for (int i = 0; i < sz; ++i)
     {
-        grads[i] = chainGrad[i] * drelu(output[i]);
+        grads[i] = chainGradT[i] * drelu(output[i]);
     }
     return grads;
 }

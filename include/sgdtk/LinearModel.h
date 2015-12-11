@@ -17,6 +17,7 @@ namespace sgdtk
     class LinearModel : public Model
     {
     protected:
+        /// THIS SHOULD BE CUDA BACKED!
         DenseVectorN weights;
 
         double wdiv;
@@ -59,9 +60,12 @@ namespace sgdtk
          */
         virtual void save(String file);
 
+        /// Extract to a (D)AXPY!
         virtual void add(const FeatureVector *fv, double disp)
         {
             const auto &sv = fv->getX()->getNonZeroOffsets();
+
+            ////weights.axpy(fv->getX(), disp);
             for (auto p : sv)
             {
                 weights.x[p.first] += p.second * disp;
@@ -70,6 +74,7 @@ namespace sgdtk
 
         virtual double predict(const FeatureVector *fv);
 
+        virtual std::vector<double> score(const sgdtk::FeatureVector *fv);
         virtual Model *prototype() const
         {
             return new LinearModel(*this);
@@ -118,6 +123,8 @@ namespace sgdtk
         {
             scaleWeights(eta, lambda);
 
+            /// ANOTHER (D)AXPY, except, a is determined on each
+
             for (auto offset : vectorN->getNonZeroOffsets())
             {
                 auto grad = dLoss * offset.second;
@@ -129,6 +136,7 @@ namespace sgdtk
             wbias += -etab * dLoss;
         }
 
+        // Not really adding too much value, just makes it possible for adagrad to happen without a separate updateWeights
         virtual double perWeightUpdate(int index, double grad, double eta)
         {
             return eta;

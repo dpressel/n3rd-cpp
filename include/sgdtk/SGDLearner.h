@@ -2,7 +2,7 @@
 #define __SGDTK_SGD_LEARNER_H__
 
 #include "sgdtk/Learner.h"
-#include "sgdtk/LinearModel.h"
+#include "sgdtk/WeightModel.h"
 #include "sgdtk/FeatureVector.h"
 #include "sgdtk/Loss.h"
 #include "sgdtk/LearningRateSchedule.h"
@@ -43,7 +43,7 @@ namespace sgdtk
         ~SGDLearner()
         { }
 
-        void trainOne(Model *lm, const FeatureVector *fv);
+        void trainOne(Model *model, const FeatureVector *fv);
 
         double evalOne(Model *model, const FeatureVector *fv, Metrics &metrics);
 

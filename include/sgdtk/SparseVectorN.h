@@ -46,6 +46,21 @@ namespace sgdtk
             return j < 0 ? 0. : offsets[j].second;
         }
 
+        inline double sparseDot(const Offsets &offsets) const
+        {
+            double d = 0.;
+            std::map<int, double> map;
+            for (Offset p : this->offsets)
+            {
+                map[p.first] = p.second;
+            }
+            for (Offset p : offsets)
+            {
+                d += map[p.first] * p.second;
+            }
+            return d;
+        }
+
         void from(const VectorN &source);
 
         void organize();

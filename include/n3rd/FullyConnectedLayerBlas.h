@@ -1,8 +1,9 @@
 #ifndef __N3RD_CPP_FULLYCONNECTEDLAYERBLAS_H__
 #define __N3RD_CPP_FULLYCONNECTEDLAYERBLAS_H__
 
-#include "n3rd/Layer.h"
+#include "n3rd/AbstractLayer.h"
 #include <sgdtk/Tensor.h>
+#include <sgdtk/TensorI.h>
 #include <cmath>
 #include <cstdlib>
 #include <sgdtk/DenseVectorN.h>
@@ -10,7 +11,7 @@
 
 namespace n3rd
 {
-    class FullyConnectedLayerBlas : public Layer
+    class FullyConnectedLayerBlas : public AbstractLayer<>
     {
 
         sgdtk::Tensor z;
@@ -39,7 +40,7 @@ namespace n3rd
          * @param x
          * @return
          */
-        sgdtk::Tensor& forward(const sgdtk::Tensor& input);
+        sgdtk::TensorI& forward(const sgdtk::TensorI& input);
 
         /**
          * Do backprop
@@ -47,7 +48,7 @@ namespace n3rd
          * @param y Label
          * @return The deltas for this layer
          */
-        sgdtk::Tensor& backward(sgdtk::Tensor& outputLayerGrad, double y);
+        sgdtk::TensorI& backward(sgdtk::TensorI& outputLayerGrad, double y);
 
         int getOutputLength() const
         {

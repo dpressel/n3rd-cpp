@@ -63,8 +63,10 @@ namespace sgdtk
             LinearModel::scaleWeights(eta, lambda);
         }
 
+        /// UPDATE!!!!
         virtual double perWeightUpdate(int index, double grad, double eta)
         {
+
             gg.x[index] = ALPHA * gg.x[index] + BETA * grad * grad;
             double etaThis = eta / std::sqrt(gg.x[index] + EPS);
             sumEta += etaThis;

@@ -6,7 +6,7 @@
 #define __N3RD_CPP_TEMPORALCONVOLUTIONALLAYERFFT_H__
 
 #include <sgdtk/Tensor.h>
-#include "n3rd/Layer.h"
+#include "n3rd/AbstractLayer.h"
 #include "sgdtk/DenseVectorN.h"
 #include <cmath>
 #include <cstdlib>
@@ -16,7 +16,7 @@
 namespace n3rd
 {
 
-    class TemporalConvolutionalLayerFFT : public Layer
+    class TemporalConvolutionalLayerFFT : public AbstractLayer<>
     {
     public:
 
@@ -31,10 +31,10 @@ namespace n3rd
 
         TemporalConvolutionalLayerFFT(int nK, int kL, int kW, int embeddingSize);
 
-        sgdtk::Tensor& forward(const sgdtk::Tensor& z);
+        sgdtk::TensorI& forward(const sgdtk::TensorI& z);
 
 
-        sgdtk::Tensor& backward(sgdtk::Tensor& chainGrad, double y);
+        sgdtk::TensorI& backward(sgdtk::TensorI& chainGrad, double y);
 
         std::string getType() const
         { return "TemporalConvolutionalLayerFFT"; }

@@ -5,7 +5,7 @@
 #ifndef __N3RD_CPP_LOGSOFTMAXLAYER_H__
 #define __N3RD_CPP_LOGSOFTMAXLAYER_H__
 
-#include "n3rd/Layer.h"
+#include "n3rd/AbstractLayer.h"
 #include <sgdtk/DenseVectorN.h>
 #include <cmath>
 namespace n3rd
@@ -16,13 +16,13 @@ namespace n3rd
  *
  * @author dpressel
  */
-    class LogSoftMaxLayer : public Layer
+    class LogSoftMaxLayer : public AbstractLayer<>
     {
     public:
 
-        sgdtk::Tensor& forward(const sgdtk::Tensor& z);
+        sgdtk::TensorI& forward(const sgdtk::TensorI& z);
 
-        sgdtk::Tensor& backward(sgdtk::Tensor& chainGrad, double y);
+        sgdtk::TensorI& backward(sgdtk::TensorI& chainGrad, double y);
 
         std::string getType() const { return "LogSoftMaxLayer"; }
     };

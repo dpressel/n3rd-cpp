@@ -8,9 +8,10 @@ using namespace n3rd;
 using namespace sgdtk;
 #include <iostream>
 
-sgdtk::Tensor& MaxOverTimePoolingLayer::forward(const sgdtk::Tensor& z)
+sgdtk::TensorI& MaxOverTimePoolingLayer::forward(const sgdtk::TensorI& z)
 {
 
+    const sgdtk::Tensor& zT = (const sgdtk::Tensor&)z;
     numFrames = z.size() / featureMapSz;
     grads.resize({featureMapSz, 1, numFrames});
     int sz = output.size();
@@ -31,7 +32,7 @@ sgdtk::Tensor& MaxOverTimePoolingLayer::forward(const sgdtk::Tensor& z)
         {
 
             int inAddr = l * numFrames + i;
-            double ati = z[inAddr];
+            double ati = zT[inAddr];
             if (ati > mxValue)
             {
                 mxIndex = inAddr;
@@ -51,15 +52,16 @@ sgdtk::Tensor& MaxOverTimePoolingLayer::forward(const sgdtk::Tensor& z)
 
 // Since the output and input are the same for the max value, we can just apply the
 // max-pool value from the output
-sgdtk::Tensor& MaxOverTimePoolingLayer::backward(sgdtk::Tensor& chainGrad, double y)
+sgdtk::TensorI& MaxOverTimePoolingLayer::backward(sgdtk::TensorI& chainGrad, double y)
 {
+    const sgdtk::Tensor& chainGradT = (const sgdtk::Tensor&)chainGrad;
     grads.constant(0.);
 
     for (int l = 0; l < featureMapSz; ++l)
     {
 
         int inAddr = origin[l];
-        grads[inAddr] = chainGrad[l];
+        grads[inAddr] = chainGradT[l];
 
     }
     return grads;

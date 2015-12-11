@@ -11,9 +11,10 @@ TemporalConvolutionalLayerBlas::TemporalConvolutionalLayerBlas(int nK, int kL, i
     this->kW = kW;
 
     weights.resize({kL * kW, nK});
-    gradsW.resize({kL * kW, nK});
-    biases.resize(nK);
-    biasGrads.resize(nK);
+    gradsW.resize(weights.dims);
+    weightAccum.resize(weights.dims, 0);
+    biases.resize({nK}, 0);
+    biasGrads.resize({nK}, 0);
 
     std::default_random_engine generator;
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
@@ -121,13 +122,14 @@ void TemporalConvolutionalLayerBlas::wrapGrad(const sgdtk::Tensor& unwrapped)
     }
 }
 
-sgdtk::Tensor& TemporalConvolutionalLayerBlas::forward(const sgdtk::Tensor& z)
+sgdtk::TensorI& TemporalConvolutionalLayerBlas::forward(const sgdtk::TensorI& z)
 {
     // For convolutions, we should assume that our VectorN is truly a matrix
     // and the usual math applies
 
+    const sgdtk::Tensor& zT = (const sgdtk::Tensor&)z;
     numFrames = z.size() / kL;
-    input = z;
+    input = zT;
     grads.resize({kL, 1, numFrames});
     grads.constant(0.);
     const int oT = numFrames - kW + 1;
@@ -150,14 +152,16 @@ sgdtk::Tensor& TemporalConvolutionalLayerBlas::forward(const sgdtk::Tensor& z)
 }
 
 
-sgdtk::Tensor& TemporalConvolutionalLayerBlas::backward(sgdtk::Tensor &chainGrad, double y)
+sgdtk::TensorI& TemporalConvolutionalLayerBlas::backward(sgdtk::TensorI &chainGrad, double y)
 {
     const int oT = numFrames - kW + 1;
 
     std::vector<int> outputDims = { nK, 1, oT };
 
+    sgdtk::Tensor& chainGradT = (sgdtk::Tensor&)chainGrad;
+
     sgdtk::Tensor unwrappedChainGrad({oT, nK});
-    unwrapGradFromNextLayer(chainGrad, unwrappedChainGrad);
+    unwrapGradFromNextLayer(chainGradT, unwrappedChainGrad);
     std::vector<int> unwrappedGradDims = {oT, kW * kL};
     sgdtk::Tensor unwrappedGradInput(unwrappedGradDims);
 

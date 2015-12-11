@@ -5,7 +5,6 @@
 
 
 #include "n3rd/TemporalConvolutionalLayer.h"
-//#include "n3rd/TemporalConvolutionalLayerCuDNN.h"
 #include "n3rd/TemporalConvolutionalLayerCuBlas.h"
 using namespace sgdtk;
 using namespace n3rd;
@@ -92,19 +91,22 @@ double SQ_M_W_1000 = 11477.130271620003;
 
 void testForward() throw(Exception)
 {
-    //TemporalConvolutionalLayerCuDNN *l = new TemporalConvolutionalLayerCuDNN(gHandle, 1, 1, 6, 1);
     TemporalConvolutionalLayerCuBlas* l = new TemporalConvolutionalLayerCuBlas(1,1,6);
-    auto &w = l->getParams();
+    CudaTensor &dW = (CudaTensor&)l->getParams();
+
+    Tensor w(dW.dims);
     for (int i = 0; i < K.size(); ++i)
     {
         w[i] = K[i];
     }
-    //l->copyWeights();
-
-    auto& t = l->getParams();
+    dW.fromCPU(w, false);
 
     Tensor d(D, {1, 1, 12});
-    Tensor &output = l->forward(d);
+    CudaTensor dD(d);
+    CudaTensor& dOutput = (CudaTensor&)l->forward(dD);
+
+    Tensor output;
+    dOutput.toCPU(output);
 
     assertEquals(output.size(), O.size());
 

@@ -11,15 +11,15 @@ Model *SGDLearner::create(void *p)
 
 void SGDLearner::trainOne(Model *model, const FeatureVector *fv)
 {
-    LinearModel *lm = (LinearModel *) model;
+    WeightModel *weightModel = (WeightModel *) model;
     double eta = learningRateSchedule->update();
    //double eta = eta0 / (1 + lambda * eta0 * numSeenTotal);
 
     double y = fv->getY();
-    double fx = lm->predict(fv);
+    double fx = model->predict(fv);
     double dLoss = lossFunction->dLoss(fx, y);
 
-    lm->updateWeights(fv->getX(), eta, lambda, dLoss, y);
+    weightModel->updateWeights(fv->getX(), eta, lambda, dLoss, y);
 }
 
 void SGDLearner::preprocess(Model *model, const std::vector<FeatureVector *> &sample)
@@ -55,7 +55,7 @@ void SGDLearner::preprocess(Model *model, const std::vector<FeatureVector *> &sa
 
 double SGDLearner::evalEta(Model *model, const std::vector<FeatureVector *> &sample, double eta)
 {
-    auto *clone = (LinearModel *) model->prototype();
+    auto *clone = (WeightModel *) model->prototype();
 
     for (size_t i = 0, sz = sample.size(); i < sz; ++i)
     {
@@ -102,7 +102,7 @@ Model *SGDLearner::trainEpoch(Model *model,
         //++numSeenTotal;
     }
 
-    auto *lm = (LinearModel *) model;
+    auto *lm = (WeightModel *) model;
 
     std::cout << "wNorm=" << lm->mag() << std::endl;
     return model;
@@ -128,7 +128,7 @@ void SGDLearner::eval(Model *model,
         evalOne(model, fv, metrics);
     }
 
-    auto *lm = (LinearModel *) model;
+    auto *lm = (WeightModel *) model;
     auto normW = lm->mag();
     auto cost = metrics.getLoss() + 0.5 * lambda * normW;
     metrics.setCost(cost);

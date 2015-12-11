@@ -3,12 +3,13 @@
 
 #include <vector>
 #include <sgdtk/Exception.h>
-
+#include <cblas.h>
+#include <sgdtk/TensorI.h>
 namespace sgdtk
 {
 
     typedef double Real;
-    class Tensor
+    class Tensor : public TensorI
     {
     public:
 
@@ -46,8 +47,23 @@ namespace sgdtk
             resize(dimensions);
         }
 
+        double mag() const;
 
-        void resize(const std::vector<int>& dimensions, Real cv = 0.)
+        void scale(double scalar);
+
+        void resize(const std::vector<int>& dimensions)
+        {
+            dims = dimensions;
+            int length = 1;
+            for (int dim : dims)
+            {
+                length *= dim;
+            }
+            d.resize(length);
+        }
+
+
+        void resize(const std::vector<int>& dimensions, Real cv)
         {
             dims = dimensions;
             int length = 1;
@@ -57,6 +73,7 @@ namespace sgdtk
             }
             d.resize(length, cv);
         }
+
 
         void reshape(const std::vector<int>& newDimensions) throw(Exception)
         {
@@ -103,15 +120,16 @@ namespace sgdtk
             return d.empty();
         }
 
-        void scale(Real x)
+        //void scale(Real x)
+        //{
+        //    for (int i = 0, sz = d.size(); i < sz; ++i)
+        //    {
+        //        d[i] *= x;
+        //    }
+        //}
+        void add(const TensorI& x)
         {
-            for (int i = 0, sz = d.size(); i < sz; ++i)
-            {
-                d[i] *= x;
-            }
-        }
-        void add(const Tensor& x)
-        {
+            const Tensor& tensor = (const Tensor&)x;
             int sz = x.size();
             if (sz != d.size())
             {
@@ -119,8 +137,13 @@ namespace sgdtk
             }
             for (int i = 0; i < sz; ++i)
             {
-                d[i] += x[i];
+                d[i] += tensor[i];
             }
+        }
+
+        std::string getStorageType() const
+        {
+            return "vector";
         }
     };
 

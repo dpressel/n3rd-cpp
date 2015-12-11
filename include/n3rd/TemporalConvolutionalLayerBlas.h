@@ -2,7 +2,7 @@
 #define __N3RD_CPP_TEMPORALCONVOLUTIONALLAYERBLAS_H__
 
 #include <sgdtk/Tensor.h>
-#include "n3rd/Layer.h"
+#include "n3rd/AbstractLayer.h"
 #include "sgdtk/DenseVectorN.h"
 #include <cmath>
 #include <cstdlib>
@@ -11,7 +11,7 @@
 namespace n3rd
 {
 
-    class TemporalConvolutionalLayerBlas : public Layer
+    class TemporalConvolutionalLayerBlas : public AbstractLayer<>
     {
         void reorderOutput(sgdtk::Tensor& unwrapped);
         void unwrapGradFromNextLayer(const sgdtk::Tensor& chainGrad, sgdtk::Tensor& unwrapped);
@@ -49,10 +49,10 @@ namespace n3rd
         }
 
 
-        sgdtk::Tensor& forward(const sgdtk::Tensor& input);
+        sgdtk::TensorI& forward(const sgdtk::TensorI& input);
 
 
-        sgdtk::Tensor& backward(sgdtk::Tensor& chainGrad, double y);
+        sgdtk::TensorI& backward(sgdtk::TensorI& chainGrad, double y);
 
         std::string getType() const
         { return "TemporalConvolutionalLayerBlas"; }

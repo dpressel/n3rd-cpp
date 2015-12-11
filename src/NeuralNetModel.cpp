@@ -19,76 +19,91 @@ void NeuralNetModel::updateWeights(const sgdtk::VectorN *vector, double eta, dou
 {
     // Allocate Adagrad vector
 
-    sgdtk::Tensor out({dLoss}, {1});
+    // THIS *DOES NOT* WORK
 
-    auto& chainGrad = out;
+    sgdtk::TensorI* start = makeLossTensor(dLoss);
+
+    sgdtk::TensorI* chainGrad = start;
 
     int numLayers = layers.size();
     for (int k = numLayers - 1; k >= 0; --k)
     {
         Layer *layer = layers[k];
-#ifdef DEBUG_OUT
-        std::cout << layer->getType() << "... ";
-#endif
+
         // This updates the entire chain back, which handles our deltas, so now we have the backward delta
         // during this step, the weight params, if they exist should have also been computed
-        chainGrad = layer->backward(chainGrad, y);
-#ifdef DEBUG_OUT
-        std::cout << "DONE" << std::endl;
-#endif
+        sgdtk::TensorI& output = layer->backward(*chainGrad, y);
+        chainGrad = &output;
         // Now we need to update each layer's weights
-        sgdtk::Tensor& weights = layer->getParams();
 
-        //std::cout << layer->getType() << std::endl;
-        // Sometimes weights can be NULL in layers without parameters, dont touch them!
-        if (!weights.empty())
-        {
-#ifdef DEBUG_OUTPUT
-            std::cout << "\tUpdating weights" << std::endl;
-#endif
-            // Initialize Adagrad for layer k
-            if (gg[k].empty())
-            {
-                gg[k].resize(weights.size(), 0);
-            }
-            auto& weightGrads = layer->getParamGrads();
+        updateLayerWeights(layer, k, eta, lambda);
 
-            for (int i = 0, sz = weights.size(); i < sz; ++i)
-            {
-                if (weightGrads[i] == 0.0)
-                    continue;
 
-                // Adagrad update
-                gg[k][i] = ALPHA * gg[k][i] + BETA * weightGrads[i] * weightGrads[i];
-                auto etaThis = eta / std::sqrt(gg[k][i] + EPS);
-                auto delta = -etaThis * weightGrads[i];
-                weights[i] *= (1 - eta * lambda);
-                weights[i] += delta;
-                weightGrads[i] = 0;
 
-            }
+    }
+    delete start;
+}
 
-        }
+void NeuralNetModel::updateLayerWeights(Layer *layer, int k, double eta, double lambda)
+{
+    sgdtk::TensorI &weights = (sgdtk::Tensor &) layer->getParams();
+    if (weights.empty())
+        return;
 
-        auto& biasParams = layer->getBiasParams();
-        // Same story for biasParams, can be NULL
-        if (!biasParams.empty())
-        {
-#ifdef DEBUG_OUTPUT
-            std::cout << "\tUpdating biases" << std::endl;
-#endif
-            auto& biasGrads = layer->getBiasGrads();
-            for (int i = 0, sz = biasParams.size(); i < sz; ++i)
-            {
-                // Dont bother to regularize
-                auto delta = -(biasGrads[i] * eta);// * 0.01; // last number is total fudge
-                biasParams[i] += delta;
-                biasGrads[i] = 0;
-            }
-        }
+    sgdtk::TensorI &biasParams = layer->getParams();
+
+    adagradUpdate(layer, eta, lambda);
+
+
+    if (!biasParams.empty())
+    {
+        updateBiasWeights(layer, eta);
+    }
+
+}
+void NeuralNetModel::updateBiasWeights(Layer *layer, double eta) const
+{
+
+
+    sgdtk::Tensor &biasParamsT = (sgdtk::Tensor&)layer->getBiasParams();
+    sgdtk::Tensor &biasGradsT = (sgdtk::Tensor &) layer->getBiasGrads();
+
+    int bSz = biasParamsT.size();
+
+    for (int i = 0; i < bSz; ++i)
+    {
+        auto delta = -(biasGradsT[i] * eta);// * 0.01; // last number is total fudge
+        biasParamsT[i] += delta;
+        biasGradsT[i] = 0;
     }
 }
 
+void NeuralNetModel::adagradUpdate(Layer *layer, double eta, double lambda) const
+{
+    sgdtk::Tensor& gg = (sgdtk::Tensor&)layer->getWeightAccum();
+    sgdtk::Tensor& weightsT = (sgdtk::Tensor&)layer->getParams();
+    int wSz = weightsT.size();
+
+    sgdtk::Tensor &weightGradsT = (sgdtk::Tensor &) layer->getParamGrads();
+
+    for (int i = 0; i < wSz; ++i)
+    {
+        // No harm in skipping this on GU, no divergence
+        if (weightGradsT[i] == 0.0)
+            continue;
+
+        // Adagrad update
+        //addSquare(gg[k], weightGradsT);
+        //gg[k].addSquare(weightGradsT);
+        gg[i] = gg[i] + weightGradsT[i] * weightGradsT[i];
+        auto etaThis = eta / sqrt(gg[i] + EPS);
+        auto delta = -etaThis * weightGradsT[i];
+        weightsT[i] *= (1 - eta * lambda);
+        weightsT[i] += delta;
+        weightGradsT[i] = 0;
+
+    }
+}
 
 /**
  * Override the SGDTk base model's fit() function to predict.  This gives back a binary prediction centered around
@@ -118,10 +133,10 @@ double NeuralNetModel::predict(const sgdtk::FeatureVector *fv)
  * @param x A feature vector
  * @return A result
  */
-sgdtk::Tensor NeuralNetModel::forward(const sgdtk::Tensor& x)
+sgdtk::TensorI& NeuralNetModel::forward(sgdtk::TensorI& x)
 {
+    const sgdtk::TensorI* in = &x;
 
-    const auto* in = &x;
     for (int i = 0, sz = layers.size(); i < sz; ++i)
     {
         Layer* layer = layers[i];
@@ -129,7 +144,8 @@ sgdtk::Tensor NeuralNetModel::forward(const sgdtk::Tensor& x)
         const auto& ref = layer->getOutput();
         in = &ref;
     }
-    return *in;
+
+    return layers[layers.size() - 1]->getOutput();
 }
 
 /**
@@ -145,15 +161,19 @@ std::vector<double> NeuralNetModel::score(const sgdtk::FeatureVector* fv)
 {
 
     sgdtk::DenseVectorN* dvn = (sgdtk::DenseVectorN*)fv->getX();
-    auto x = forward(dvn->getX());
+    sgdtk::Tensor& x = dvn->getX();
+    auto& fwd = forward(x);
 
+    const sgdtk::Tensor& outT = (const sgdtk::Tensor&) fwd;
+
+    std::vector<double> output(outT.d);
     // Assuming a probability distribution, we are going to want to shift and scale
     if (scaleOutput)
     {
         for (int i = 0, sz = x.size(); i < sz; ++i)
         {
-            x[i] = (x[i] - 0.5) * 2.0;
+            output[i] = (output[i] - 0.5) * 2.0;
         }
     }
-    return x.d;
+    return output;
 }

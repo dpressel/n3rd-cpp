@@ -7,14 +7,15 @@
 using namespace n3rd;
 
 
-sgdtk::Tensor& DropoutLayer::forward(const sgdtk::Tensor& x)
+sgdtk::TensorI& DropoutLayer::forward(const sgdtk::TensorI& x)
 {
+    const sgdtk::Tensor& xT = (const sgdtk::Tensor&)x;
     std::bernoulli_distribution bernoulli(probDrop);
     int sz = x.size();
 
     if (probDrop > 0.)
     {
-        output.resize(x.dims);
+        output.resize(xT.dims);
 
         double scale = 1. / (1. - probDrop);
         int sz = x.size();
@@ -31,29 +32,30 @@ sgdtk::Tensor& DropoutLayer::forward(const sgdtk::Tensor& x)
             bool mask = bernoulli(generator);
 
             bits[i] = mask;
-            output[i] = mask ? 0.: x[i] * scale;
+            output[i] = mask ? 0.: xT[i] * scale;
 
         }
 
     }
     else
     {
-        output = x;
+        output = xT;
     }
 
 }
 
-sgdtk::Tensor& DropoutLayer::backward(sgdtk::Tensor& chainGrad, double y)
+sgdtk::TensorI& DropoutLayer::backward(sgdtk::TensorI& chainGrad, double y)
 {
+    const sgdtk::Tensor& chainGradT = (const sgdtk::Tensor&)chainGrad;
     double scale = 1. / (1. - probDrop);
-    int sz = chainGrad.size();
-    grads.resize(chainGrad.dims);
+    int sz = chainGradT.size();
+    grads.resize(chainGradT.dims);
 
     grads.constant(0.);
 
     for (int i = 0; i < sz; ++i)
     {
-        grads[i] = bits[i] ? 0. : chainGrad[i] * scale;
+        grads[i] = bits[i] ? 0. : chainGradT[i] * scale;
     }
     return grads;
 }

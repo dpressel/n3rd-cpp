@@ -1,7 +1,7 @@
 #ifndef __N3RD_CPP_FULLYCONNECTEDLAYERCUBLAS_H__
 #define __N3RD_CPP_FULLYCONNECTEDLAYERCUBLAS_H__
 
-#include "n3rd/Layer.h"
+#include "n3rd/AbstractLayer.h"
 #include <sgdtk/Tensor.h>
 #include <cmath>
 #include <cstdlib>
@@ -10,18 +10,18 @@
 
 namespace n3rd
 {
-    class FullyConnectedLayerCuBlas : public Layer
+    class FullyConnectedLayerCuBlas : public AbstractLayer<sgdtk::CudaTensor>
     {
 
 
         int outputLength;
         int inputLength;
 
-        sgdtk::CudaTensor dWeights;
-        sgdtk::CudaTensor dWeightGrads;
-        sgdtk::CudaTensor dOutput;
-        sgdtk::CudaTensor dGrads;
-        sgdtk::CudaTensor dInput;
+        ///sgdtk::CudaTensor dWeights;
+        ////sgdtk::CudaTensor dWeightGrads;
+        ////sgdtk::CudaTensor dOutput;
+        ////sgdtk::CudaTensor dGrads;
+        const sgdtk::CudaTensor* dInput;
 
     public:
         /**
@@ -45,7 +45,7 @@ namespace n3rd
          * @param x
          * @return
          */
-        sgdtk::Tensor& forward(const sgdtk::Tensor& input);
+        sgdtk::TensorI& forward(const sgdtk::TensorI& input);
 
         /**
          * Do backprop
@@ -53,7 +53,7 @@ namespace n3rd
          * @param y Label
          * @return The deltas for this layer
          */
-        sgdtk::Tensor& backward(sgdtk::Tensor& outputLayerGrad, double y);
+        sgdtk::TensorI& backward(sgdtk::TensorI& outputLayerGrad, double y);
 
         int getOutputLength() const
         {

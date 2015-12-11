@@ -145,7 +145,7 @@ double DenseVectorN::ddot(const DenseVectorN& vec) const
     return acc;
 #endif
 }
-
+/*
 extern "C" SGDTK_DVN sgdtk_DenseVectorN_create(int length)
 {
     return new DenseVectorN(length);
@@ -216,3 +216,4 @@ extern "C" void sgdtk_DenseVectorN_organize(SGDTK_DVN self)
     DenseVectorN* dvn = (DenseVectorN*)self;
     dvn->organize();
 }
+*/

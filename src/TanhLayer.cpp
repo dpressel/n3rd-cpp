@@ -2,8 +2,9 @@
 
 using namespace n3rd;
 
-sgdtk::Tensor& TanhLayer::forward(const sgdtk::Tensor& z)
+sgdtk::TensorI& TanhLayer::forward(const sgdtk::TensorI& z)
 {
+    const sgdtk::Tensor& zT = (const sgdtk::Tensor&)z;
     int sz = z.size();
 
     if (sz != output.size())
@@ -17,18 +18,19 @@ sgdtk::Tensor& TanhLayer::forward(const sgdtk::Tensor& z)
 
     for (int i = 0; i < sz; ++i)
     {
-        output[i] = std::tanh(z[i]);
+        output[i] = std::tanh(zT[i]);
     }
     return output;
 }
 
-sgdtk::Tensor& TanhLayer::backward(sgdtk::Tensor& chainGrad, double y)
+sgdtk::TensorI& TanhLayer::backward(sgdtk::TensorI& chainGrad, double y)
 {
+    const sgdtk::Tensor& chainGradT = (const sgdtk::Tensor&)chainGrad;
     int sz = chainGrad.size();
 
     for (int i = 0; i < sz; ++i)
     {
-        grads[i] = chainGrad[i] * (1 - output[i]*output[i]);
+        grads[i] = chainGradT[i] * (1 - output[i]*output[i]);
     }
     return grads;
 }

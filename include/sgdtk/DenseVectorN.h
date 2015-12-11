@@ -9,32 +9,32 @@
 
 namespace sgdtk
 {
-    class DenseVectorN : public VectorN
-    {
+    class DenseVectorN : public VectorN {
 
     public:
         Tensor x;
-        DenseVectorN(const VectorN& source);
-        DenseVectorN(const DenseVectorN& dv);
+
+        DenseVectorN(const VectorN &source);
+
+        DenseVectorN(const DenseVectorN &dv);
+
         DenseVectorN();
 
         DenseVectorN(int length);
 
-        DenseVectorN(const Tensor& x);
+        DenseVectorN(const Tensor &x);
 
-        DenseVectorN& operator=(const VectorN &v);
+        DenseVectorN &operator=(const VectorN &v);
 
-        DenseVectorN& operator=(const DenseVectorN &dv);
+        DenseVectorN &operator=(const DenseVectorN &dv);
 
         ~DenseVectorN();
 
-        void resize(int length)
-        {
+        void resize(int length) {
             x.resize({length});
         }
 
-        int length() const
-        {
+        int length() const {
             return x.size();
         }
 
@@ -42,14 +42,12 @@ namespace sgdtk
 
         double mag() const;
 
-        double update(int i, double v)
-        {
+        double update(int i, double v) {
             x[i] += v;
             return x[i];
         }
 
-        void set(int i, double v)
-        {
+        void set(int i, double v) {
             x[i] = v;
         }
 
@@ -57,23 +55,32 @@ namespace sgdtk
 
         Offsets getNonZeroOffsets() const;
 
-        double at(int i) const
-        {
+        double at(int i) const {
             return x[i];
         }
 
-        Tensor& getX()
-        {
-            return x;
-        }
-        const Tensor& getX() const
-        {
+        Tensor &getX() {
             return x;
         }
 
-        double dot(const VectorN& vec) const;
+        const Tensor &getX() const {
+            return x;
+        }
 
-        double ddot(const DenseVectorN& vec) const;
+        double dot(const VectorN &vec) const;
+
+        double ddot(const DenseVectorN &vec) const;
+
+        inline double sparseDot(const Offsets &offsets) const
+        {
+            double d = 0.;
+            for (Offset p : offsets)
+            {
+                d += x[p.first] * p.second;
+            }
+            return d;
+        }
+
 
         void from(const VectorN& source);
 
@@ -85,7 +92,7 @@ namespace sgdtk
         }
     };
 }
-
+/*
 extern "C"
 {
     typedef void* SGDTK_DVN;
@@ -109,5 +116,6 @@ extern "C"
 
 }
 
+*/
 
 #endif

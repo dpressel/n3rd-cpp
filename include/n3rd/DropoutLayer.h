@@ -5,13 +5,13 @@
 #ifndef __N3RD_CPP_DROPOUT_H__
 #define __N3RD_CPP_DROPOUT_H__
 
-#include "n3rd/Layer.h"
+#include "n3rd/AbstractLayer.h"
 #include <random>
 #include <vector>
 
 namespace n3rd
 {
-    class DropoutLayer : public Layer
+    class DropoutLayer : public AbstractLayer<>
     {
         std::vector<bool> bits;
         double probDrop;
@@ -24,9 +24,9 @@ namespace n3rd
             bits.resize(1024);
         }
 
-        sgdtk::Tensor& forward(const sgdtk::Tensor& x);
+        sgdtk::TensorI& forward(const sgdtk::TensorI& x);
 
-        sgdtk::Tensor& backward(sgdtk::Tensor& chainGrad, double y);
+        sgdtk::TensorI& backward(sgdtk::TensorI& chainGrad, double y);
 
         std::string getType() const { return "DropoutLayer"; }
     };

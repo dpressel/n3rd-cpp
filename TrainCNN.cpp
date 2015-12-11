@@ -19,6 +19,9 @@
 #include "n3rd/WeightHacks.h"
 //#include "n3rd/TemporalConvolutionalLayerFFT.h"
 #include "n3rd/TemporalConvolutionalLayerCuBlas.h"
+#include "n3rd/MaxOverTimePoolingLayerCuda.h"
+#include "n3rd/TanhLayerCuda.h"
+#include "n3rd/NeuralNetModelCuda.h"
 using namespace sgdtk;
 using namespace n3rd;
 
@@ -41,19 +44,25 @@ void showMetrics(const Metrics& metrics, String pre)
 Learner* createTrainer(double lambda, double eta, int embeddingsAsChannels)//, cudnnHandle_t handle)
 {
     // FIXME!!
-    NeuralNetModelFactory* nnmf;
+    ModelFactory* nnmf;
     if (embeddingsAsChannels)
     {
         std::cout << "Use embeddings as input channels" << std::endl;
-        nnmf = new NeuralNetModelFactory( {
-                // Emit 8 feature maps use a kernel width of 7 -- embeddings are 300 deep (L1)
-                new TemporalConvolutionalLayerCuBlas(100, 300, 7),
-                new MaxOverTimePoolingLayer(100), new TanhLayer(),
-                new FullyConnectedLayerCuBlas(1, 100), new TanhLayer() });
+        ///nnmf = new NeuralNetModelFactory<NeuralNetModel>( {
+        ///        // Emit 8 feature maps use a kernel width of 7 -- embeddings are 300 deep (L1)
+        ///        new TemporalConvolutionalLayerBlas(100, 300, 7),
+        ///        new MaxOverTimePoolingLayer(100), new TanhLayer(),
+        ///        new FullyConnectedLayerBlas(1, 100), new TanhLayer() });
+
+        nnmf = new NeuralNetModelFactory<NeuralNetModelCuda>( {
+                                                                      // Emit 8 feature maps use a kernel width of 7 -- embeddings are 300 deep (L1)
+                                                                      new TemporalConvolutionalLayerCuBlas(100, 300, 7),
+                                                                      new MaxOverTimePoolingLayerCuda(100), new TanhLayerCuda(),
+                                                                      new FullyConnectedLayerCuBlas(1, 100), new TanhLayerCuda() });
     }
     else
     {
-        nnmf = new NeuralNetModelFactory({
+        nnmf = new NeuralNetModelFactory<>({
                 // Emit 8 feature maps use a kernel width of 7 -- embeddings are 300 deep (L1)
                 new TemporalConvolutionalLayer(4, 1, 7, 300), new TanhLayer(),
                 // Cut the embedding dim down to 75 by averaging adjacent embedding rows

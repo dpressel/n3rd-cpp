@@ -3,6 +3,7 @@
 
 #include <sgdtk/Tensor.h>
 #include "n3rd/Layer.h"
+#include "n3rd/AbstractLayer.h"
 #include "sgdtk/DenseVectorN.h"
 #include <cmath>
 #include <cstdlib>
@@ -12,22 +13,22 @@
 namespace n3rd
 {
 
-    class TemporalConvolutionalLayerCuBlas : public Layer
+    class TemporalConvolutionalLayerCuBlas : public AbstractLayer<sgdtk::CudaTensor>
     {
-        void reorderOutput(sgdtk::Tensor& unwrapped);
-        void unwrapGradFromNextLayer(const sgdtk::Tensor& chainGrad, sgdtk::Tensor& unwrapped);
-        void unwrapInput(const sgdtk::Tensor& x);
-        void wrapGrad(const sgdtk::Tensor& unwrapped);
+        void reorderOutput(sgdtk::CudaTensor& unwrapped);
+        void unwrapGradFromNextLayer(const sgdtk::CudaTensor& chainGrad, sgdtk::CudaTensor& unwrapped);
+        void unwrapInput(const sgdtk::CudaTensor& x);
+        void wrapGrad(const sgdtk::CudaTensor& unwrapped);
         int nK;
         int kL;
         int kW;
         int embedSz;
         int numFrames;
         //sgdtk::Tensor input;
-        sgdtk::Tensor unwrappedInput;
+        ///sgdtk::CudaTensor unwrappedInput;
 
-        sgdtk::CudaTensor dWeights;
-        sgdtk::CudaTensor dWeightGrads;
+        ////sgdtk::CudaTensor dWeights;
+        ////sgdtk::CudaTensor dWeightGrads;
         sgdtk::CudaTensor dUnwrappedInput;
         //sgdtk::CudaTensor dGrads;
 
@@ -56,10 +57,10 @@ namespace n3rd
         }
 
 
-        sgdtk::Tensor& forward(const sgdtk::Tensor& input);
+        sgdtk::TensorI& forward(const sgdtk::TensorI& input);
 
 
-        sgdtk::Tensor& backward(sgdtk::Tensor& chainGrad, double y);
+        sgdtk::TensorI& backward(sgdtk::TensorI& chainGrad, double y);
 
         std::string getType() const
         { return "TemporalConvolutionalLayerCuBlas"; }
