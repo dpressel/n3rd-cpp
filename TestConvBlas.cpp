@@ -139,7 +139,7 @@ void testWrapGrads()
     Tensor grads({2, 1, 6});
     wrapGrad(unwrapped, grads, 3);
     int sz = grads.size();
-    
+
     CudaTensor dUnwrapped(unwrapped);
     CudaTensor dGrads(grads.dims);
     dGrads.constant(0);

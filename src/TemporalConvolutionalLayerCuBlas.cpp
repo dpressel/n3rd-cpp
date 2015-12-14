@@ -119,7 +119,11 @@ sgdtk::TensorI& TemporalConvolutionalLayerCuBlas::forward(const sgdtk::TensorI& 
     const int oT = numFrames - kW + 1;
 
     output.resize({nK, 1, oT});
-    unwrapInput(zT);
+    ///////unwrapInput(zT);
+
+    dUnwrappedInput.resize({oT, kW * kL});
+    n3rdgUnwrapInput(zT.d, dUnwrappedInput.d, kL, kW, numFrames);
+
 
     double alpha = 1.0;
     double beta = 0.0;
@@ -172,7 +176,14 @@ sgdtk::TensorI& TemporalConvolutionalLayerCuBlas::backward(sgdtk::TensorI &chain
         }*/
 
 
-    wrapGrad(dUnwrappedGradInput);
+
+
+    ////// VALIDATE
+    //////wrapGrad(dUnwrappedGradInput);
+    //////sgdtk::CudaTensor gg(grads.dims);
+
+    n3rdgWrapGrad(dUnwrappedGradInput.d, grads.d, nK, kW, oT);
+
 
     return grads;
 }
