@@ -177,6 +177,42 @@ __global__ void devTranspose(double *odata, double *idata, int height, int width
     }
 }
 
+// TODO: Not optimized at all!
+__global__ void devWrapGrad(double* unwrapped, double* grads, int L, int kW, int oT)
+{
+    const int k = blockIdx.x;
+    const int iT = oT + kW - 1;
+
+    // iT = threadDims.x
+    for (int m = 0; m < kW; ++m)
+    {
+
+        if (threadIdx.x < oT)
+        {
+            int inputIdx = (k * kW + m) * oT + threadIdx.x;
+            int outputIdx = k * iT + threadIdx.x + m;
+            grads[outputIdx] += unwrapped[inputIdx];
+        }
+
+    }
+}
+
+__global__ void devUnwrapInput(double *x, double* unwrappedInput, int L, int kW, int iT)
+{
+    const int k = blockIdx.x;
+
+    for (int m = 0; m < kW; ++m)
+    {
+        if (threadIdx.x < iT)
+        {
+            const int oT = iT - kW + 1;
+            int offset = k * iT + threadIdx.x + m;
+            int n = (k * kW + m) * oT + threadIdx.x;
+            unwrappedInput[n] = x[offset];
+        }
+    }
+
+}
 
 void n3rdgTranspose(double *outputMx, double* inputMx, int height, int width)
 {
@@ -205,6 +241,21 @@ void n3rdgBiasUpdates(double* biasParams, double* biasGrads, float eta, int N)
     cudaDeviceSynchronize();
 }
 
+// We are putting a hard limit on N here, notice its capped at 256!
+void n3rdgWrapGrad(double* unwrapped, double* grads, int L, int kW, int oT)
+{
+    int blocksPerGrid = L;
+    devWrapGrad<<<blocksPerGrid, 256>>>(unwrapped, grads, L, kW, oT);
+}
+
+
+void n3rdgUnwrapInput(double *x, double* unwrapped, int L, int kW, int iT)
+{
+    int blocksPerGrid = L;
+    devUnwrapInput<<<blocksPerGrid, 256>>>(x, unwrapped, L, kW, iT);
+}
+
+// We are putting a hard limit on N here, notice its capped at 256!
 void n3rdgMaxOverTimeForward(double* dX, double* dOutput, int* dIdx, int M, int N)
 {
 

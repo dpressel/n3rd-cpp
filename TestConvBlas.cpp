@@ -79,6 +79,134 @@ std::vector<double> OFM3IFM2G_1000_1CHAN = {
 };
 
 
+void unwrapInput(const sgdtk::Tensor& x, sgdtk::Tensor& unwrappedInput, int kW)
+{
+    int kL = x.dims[0];
+    int numFrames = x.dims[2];
+    const int oT = numFrames - kW + 1;
+    unwrappedInput.resize({oT, kW * kL});
+    int n = 0;
+
+
+    for (int k = 0; k < kL; ++k)
+    {
+
+        for (int m = 0; m < kW; ++m)
+        {
+            for (int i = 0; i < oT; ++i)
+            {
+
+                int offset = k * numFrames + i + m;
+                unwrappedInput[n] = x[offset];
+                ++n;
+            }
+        }
+    }
+}
+
+void wrapGrad(const sgdtk::Tensor& unwrapped, sgdtk::Tensor& grads, int kW)
+{
+
+    const int oT = unwrapped.dims[0];
+    const int iT = oT + kW - 1;
+    assert(iT == grads.dims[2]);
+    const int kL = grads.dims[0];
+    const int embedSz = grads.dims[1];
+    assert(1 == embedSz);
+
+
+    // In the blas case, we need to write in column major, which means write down one lag, then move up to the next
+    int n = 0;
+
+    for (int k = 0; k < kL; ++k)
+    {
+        for (int m = 0; m < kW; ++m)
+        {
+            for (int i = 0; i < oT; ++i)
+            {
+                int offset = k * iT + i + m;
+                // x(kL, iT, embedSz)
+                grads[offset] += unwrapped[n];
+                n++;
+            }
+        }
+    }
+}
+
+void testWrapGrads()
+{
+    Tensor unwrapped(UNROLLED, {4,6});
+    Tensor grads({2, 1, 6});
+    wrapGrad(unwrapped, grads, 3);
+    int sz = grads.size();
+    
+    CudaTensor dUnwrapped(unwrapped);
+    CudaTensor dGrads(grads.dims);
+    dGrads.constant(0);
+    //assertEquals(grads.dims[2], unwrapped.dims[0]);
+    //assertEquals(grads.dims[2] + 3 - 1, grads.dims[2]);
+    n3rdgWrapGrad(dUnwrapped.d, dGrads.d, 2, 3, unwrapped.dims[0]);
+
+
+    Tensor gradsGPU;
+
+    dGrads.toCPU(gradsGPU);
+
+    for (int i = 0; i < sz; ++i)
+    {
+        assertEqualsF(grads[i], gradsGPU[i], 1e-6);
+    }
+
+}
+
+void testUnwrap()
+{
+
+    Tensor x(IFM2KNOE, {2,1,3});
+    Tensor unwrappedInput;
+    Tensor unwrappedGPU;
+
+    CudaTensor dX(x);
+
+
+    unwrapInput(x, unwrappedInput, 3);
+    CudaTensor dUnwrapped(unwrappedInput.dims);
+
+    n3rdgUnwrapInput(dX.d, dUnwrapped.d, 2, 3, 3);
+
+    dUnwrapped.toCPU(unwrappedGPU);
+
+    int gsz = unwrappedGPU.size();
+    int sz = unwrappedInput.size();
+
+    assertEquals(sz, gsz);
+    for  (int i = 0 ; i < sz; ++i)
+    {
+        assertEqualsF(unwrappedInput[i], unwrappedGPU[i], 1e-6);
+    }
+
+    Tensor x2(IFM2DNOE, {2,1,6});
+    dX = x2;
+
+    unwrapInput(x2, unwrappedInput, 3);
+    dUnwrapped.resize(unwrappedInput.dims);
+
+
+    n3rdgUnwrapInput(dX.d, dUnwrapped.d, 2, 3, 6);
+
+    dUnwrapped.toCPU(unwrappedGPU);
+
+    gsz = unwrappedGPU.size();
+    sz = unwrappedInput.size();
+
+    assertEquals(sz, gsz);
+    for  (int i = 0 ; i < sz; ++i)
+    {
+        assertEqualsF(unwrappedInput[i], unwrappedGPU[i], 1e-6);
+    }
+}
+
+
 void testForwardWordVecAsInChannels() throw(Exception)
 {
     auto* l = new TemporalConvolutionalLayerBlas(1, 1, 3);
@@ -400,6 +528,9 @@ int main(int argc, char **argv)
         EVAL(testForward2to1WordVecAsInChannelsGPU());
         EVAL(testForward2to3WordVecAsInChannelsGPU());
         EVAL(testBackward2to3WordVecAsInChannelsGPU());
+
+        EVAL(testUnwrap());
+        EVAL(testWrapGrads());
         std::cout << "SUCCESS!" << std::endl;
     }
     catch (Exception &ex)

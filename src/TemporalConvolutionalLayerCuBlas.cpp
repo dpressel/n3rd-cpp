@@ -85,11 +85,14 @@ void TemporalConvolutionalLayerCuBlas::wrapGrad(const sgdtk::CudaTensor& unwrapp
 
     // In the blas case, we need to write in column major, which means write down one lag, then move up to the next
     int n = 0;
-
+    // 1 .. 100
+    // n = (k * kW + m) * oT + i;
     for (int k = 0; k < kL; ++k)
     {
+        // 7
         for (int m = 0; m < kW; ++m)
         {
+            // 1 - 256
             for (int i = 0; i < oT; ++i)
             {
                 int offset = k * iT + i + m;
