@@ -17,10 +17,6 @@ namespace n3rd
         int outputLength;
         int inputLength;
 
-        ///sgdtk::CudaTensor dWeights;
-        ////sgdtk::CudaTensor dWeightGrads;
-        ////sgdtk::CudaTensor dOutput;
-        ////sgdtk::CudaTensor dGrads;
         const sgdtk::CudaTensor* dInput;
 
     public:

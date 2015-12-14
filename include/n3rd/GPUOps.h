@@ -14,5 +14,5 @@ void n3rdgMaxOverTimeForward(double* dX, double* dOutput, int* dIdx, int M, int 
 void n3rdgMaxOverTimeBackward(double* dChainGrad, int *dOrigin, double* dGrads, int M);
 void n3rdgAdagradWeightUpdates(double *weights, double *weightGrads, double *gg, float eta, float lambda, int N);
 void n3rdgBiasUpdates(double* biasParams, double* biasGrads, float eta, int N);
-
+void n3rdgTranspose(double *outputMx, double* inputMx, int height, int width);
 #endif

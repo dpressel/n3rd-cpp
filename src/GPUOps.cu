@@ -2,6 +2,11 @@
 #include <stdio.h>
 
 const float EPS = 1e-6;
+const int TILE_DIM = 16;
+const int BLOCK_ROWS = 16;
+
+
+
 __global__ void devTanh(double* x, double* output, int N)
 {
     int i = blockDim.x * blockIdx.x + threadIdx.x;
@@ -138,6 +143,46 @@ __global__ void devBiasUpdates(double* biasParams, double* biasGrads, float eta,
         biasGrads[i] = 0;
     }
 
+}
+
+
+__global__ void devTranspose(double *odata, double *idata, int height, int width)
+{
+    __shared__ double tile[TILE_DIM][TILE_DIM+1];
+
+    int xIndex = blockIdx.x * TILE_DIM + threadIdx.x;
+    int yIndex = blockIdx.y * TILE_DIM + threadIdx.y;
+    int index_in = xIndex + (yIndex)*width;
+
+    for (int i=0; i<TILE_DIM; i+=BLOCK_ROWS)
+    {
+        if (xIndex < width && (yIndex + i) < height)
+        {
+            tile[threadIdx.y+i][threadIdx.x] = idata[index_in+i*width];
+        }
+    }
+
+    __syncthreads();
+
+    xIndex = blockIdx.y * TILE_DIM + threadIdx.x;
+    yIndex = blockIdx.x * TILE_DIM + threadIdx.y;
+    int index_out = xIndex + (yIndex)*height;
+
+    for (int i=0; i<TILE_DIM; i+=BLOCK_ROWS)
+    {
+        if ((yIndex + i) < width && xIndex < height)
+        {
+            odata[index_out+i*height] = tile[threadIdx.x][threadIdx.y+i];
+        }
+    }
+}
+
+
+void n3rdgTranspose(double *outputMx, double* inputMx, int height, int width)
+{
+    dim3 grid((int)ceil(width/(double)TILE_DIM), (int)ceil(height/(double)TILE_DIM));
+    dim3 threads(TILE_DIM,BLOCK_ROWS);
+    devTranspose<<<grid, threads>>>(outputMx, inputMx, height, width);
 }
 
 void n3rdgAdagradWeightUpdates(double *weights, double *weightGrads, double *gg, float eta, float lambda, int N)

@@ -35,52 +35,6 @@ TemporalConvolutionalLayerCuBlas::TemporalConvolutionalLayerCuBlas(int nK, int k
     weights.fromCPU(cpuWeights, false);
 }
 
-// This is just a transpose!!!
-void TemporalConvolutionalLayerCuBlas::reorderOutput(sgdtk::CudaTensor& unwrapped)
-{
-    sgdtk::Tensor unwrappedT(unwrapped.dims);
-    unwrapped.toCPU(unwrappedT, false);
-    //Tensor output = new Tensor(oT, nK * embedSz);
-    // We have committed to unwrapping our output matrix to the form
-    int oT =  numFrames - kW + 1;
-    for (int k = 0; k < nK; ++k)
-    {
-        for (int i = 0; i < oT; ++i)
-        {
-
-            int nIdx = k * oT + i;
-            int cIdx = i * nK + k;
-            double tmp = unwrappedT[nIdx];
-            unwrappedT[nIdx] = unwrappedT[cIdx];
-            unwrappedT[cIdx] = tmp;
-        }
-    }
-    unwrapped.fromCPU(unwrappedT);
-
-}
-
-/// This is just a transpose
-void TemporalConvolutionalLayerCuBlas::unwrapGradFromNextLayer(const sgdtk::CudaTensor& chainGrad, sgdtk::CudaTensor& unwrapped)
-{
-    sgdtk::Tensor unwrappedT(unwrapped.dims);
-    unwrapped.toCPU(unwrappedT, false);
-    const int oT = numFrames - kW + 1;
-
-    sgdtk::Tensor chainGradT(chainGrad.dims);
-    chainGrad.toCPU(chainGradT, false);
-    // You could also do nIdx++ I think
-    for (int k = 0; k < nK; ++k)
-    {
-        for (int i = 0; i < oT; ++i)
-        {
-            int nIdx = k * oT + i;
-            int cIdx = i * nK + k;
-
-            unwrappedT[nIdx] = chainGradT[cIdx];
-        }
-    }
-    unwrapped.fromCPU(unwrappedT);
-}
 
 void TemporalConvolutionalLayerCuBlas::unwrapInput(const sgdtk::CudaTensor& dX)
 {
@@ -156,21 +110,10 @@ sgdtk::TensorI& TemporalConvolutionalLayerCuBlas::forward(const sgdtk::TensorI& 
     // For convolutions, we should assume that our VectorN is truly a matrix
     // and the usual math applies
 
-    //dWeights = weights;
-    //dWeights.toCPU(weights, false);
-
-    ////dWeights.fromCPU(weights, false);
-
     numFrames = z.size() / kL;
-    //input = z;
     grads.resize({kL, 1, numFrames});
 
-    //dGrads.resize(grads.dims);
-    //dGrads.constant(0.);
-
     const int oT = numFrames - kW + 1;
-
-    ////sgdtk::CudaTensor dOutput({nK, 1, oT});
 
     output.resize({nK, 1, oT});
     unwrapInput(zT);
@@ -179,77 +122,39 @@ sgdtk::TensorI& TemporalConvolutionalLayerCuBlas::forward(const sgdtk::TensorI& 
     double beta = 0.0;
     TRY_CUBLAS(cublasDgemm_v2(sgdtk::Globals::gBlasHandle, CUBLAS_OP_N, CUBLAS_OP_N,
                    dUnwrappedInput.dims[0], weights.dims[1], dUnwrappedInput.dims[1], &alpha, dUnwrappedInput.d, dUnwrappedInput.dims[0], weights.d, weights.dims[0], &beta, output.d, oT));
-    //cublasDgemm('N', 'N', dUnwrappedInput.dims[0], dWeights.dims[1], dUnwrappedInput.dims[1], 1.0, dUnwrappedInput.d, dUnwrappedInput.dims[0], dWeights.d, dWeights.dims[0], 0, dOutput.d, oT);
-    //cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, unwrappedInput.dims[0],
-    //            weights.dims[1],
-    //            unwrappedInput.dims[1], 1.0,
-    //            &(unwrappedInput.d[0]),
-    //            unwrappedInput.dims[0],
-    //            &(weights.d[0]), weights.dims[0], 0,
-    //            &(output.d[0]), oT);
-    //TRY_CUBLAS(cublasGetError());
-    ///dOutput.toCPU(output);
-    reorderOutput(output);
+
     return output;
 
 }
 
-
 sgdtk::TensorI& TemporalConvolutionalLayerCuBlas::backward(sgdtk::TensorI &chainGrad, double y)
 {
     const sgdtk::CudaTensor& chainGradT = (const sgdtk::CudaTensor&)chainGrad;
-    const int oT = numFrames - kW + 1;
 
+    const int oT = numFrames - kW + 1;
     std::vector<int> outputDims = { nK, 1, oT };
-    //dWeightGrads.constant(0.);
-    sgdtk::CudaTensor unwrappedChainGrad({oT, nK});
-    unwrapGradFromNextLayer(chainGradT, unwrappedChainGrad);
-    sgdtk::CudaTensor dUnwrappedChainGrad(unwrappedChainGrad);
+    chainGrad.reshape(outputDims);
 
     std::vector<int> unwrappedGradDims = {oT, kW * kL};
     //sgdtk::Tensor unwrappedGradInput(unwrappedGradDims);
     sgdtk::CudaTensor dUnwrappedGradInput(unwrappedGradDims);
 
-
-    int m = unwrappedChainGrad.dims[0];
-    int k = unwrappedChainGrad.dims[1];
+    int m = oT;
+    int k = nK;
     int n = weights.dims[0];
+
     double alpha = 1.0;
     double beta = 0.0;
 
     TRY_CUBLAS(cublasDgemm_v2(sgdtk::Globals::gBlasHandle, CUBLAS_OP_N, CUBLAS_OP_T, m, n, k, &alpha,
-                dUnwrappedChainGrad.d, m, weights.d, n, &beta,
+                chainGradT.d, m, weights.d, n, &beta,
                 dUnwrappedGradInput.d, m));
-
-
-    //cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans, m, n, k, 1.0,
-    //            &(unwrappedChainGrad.d[0]), m, &(weights.d[0]), n, 0,
-    //            &(unwrappedGradInput.d[0]), m);
-
-
-    //sgdtk::copyArrayFromGPU(dUnwrappedGradInput.d, unwrappedGradInput);
-
-    ////sgdtk::Tensor unwrappedGradInput;
-    ////dUnwrappedGradInput.toCPU(unwrappedGradInput);
 
     m = dUnwrappedInput.dims[1];
     k = dUnwrappedInput.dims[0];
-    n = dUnwrappedChainGrad.dims[1];
+    n = nK;
 
-    TRY_CUBLAS(cublasDgemm_v2(sgdtk::Globals::gBlasHandle, CUBLAS_OP_T, CUBLAS_OP_N, m, n, k, &alpha, dUnwrappedInput.d, k, dUnwrappedChainGrad.d, k, &beta, gradsW.d, m));
-
-    ////dWeightGrads.toCPU(gradsW, false);
-
-
-    // Because of the way we unrolled the embeddings matrix, we actually are allowing the previous computation
-    // to calculate values that can't and should'nt be applied to the weight
-    ///for (int i = 0, sz = weights.size(); i < sz; ++i)
-    ///{
-    ///    if (weights.d[i] == 0.0)
-    ///    {
-    ///        gradsW.d[i] = 0.;
-    ///    }
-    ///}
+    TRY_CUBLAS(cublasDgemm_v2(sgdtk::Globals::gBlasHandle, CUBLAS_OP_T, CUBLAS_OP_N, m, n, k, &alpha, dUnwrappedInput.d, k, chainGradT.d, k, &beta, gradsW.d, m));
 
         // We need to update gradsW, which are (kL * embeddingSize) * kW x (nK * embeddingSize);
         /*

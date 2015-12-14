@@ -65,12 +65,8 @@ sgdtk::TensorI& FullyConnectedLayerCuBlas::forward(const sgdtk::TensorI& input)
 {
 
     dInput = &((const sgdtk::CudaTensor&)input);
-    ////const sgdtk::Tensor& inputT = (const sgdtk::Tensor&)input;
-    ///dWeights.fromCPU(weights, false);
-    ///dOutput.constant(0.);
-    ///dInput.fromCPU(inputT, false);
+
     double one = 1.0;
-    // Remove this and you get undefined behavior
     output.constant(0);
     /// TODO: avoid constant() call above
     TRY_CUBLAS(cublasDgemv_v2(sgdtk::Globals::gBlasHandle, CUBLAS_OP_N, outputLength, inputLength, &one, weights.d, outputLength, dInput->d, 1, &one, output.d, 1));
@@ -84,42 +80,18 @@ sgdtk::TensorI& FullyConnectedLayerCuBlas::backward(sgdtk::TensorI& chainGrad, d
 {
 
     double one = 1.0;
-    ///const sgdtk::Tensor& chainGradT = (const sgdtk::Tensor&)chainGrad;
-    ///sgdtk::CudaTensor dChainGrad(chainGradT);
 
     const sgdtk::CudaTensor& dChainGrad = (const sgdtk::CudaTensor&)chainGrad;
 
-
     grads.constant(0.);
-    ///sgdtk::Tensor chainGradT(dChainGrad.dims);
 
-    ///dChainGrad.toCPU(chainGradT, false);
     TRY_CUBLAS(cublasDgemv_v2(sgdtk::Globals::gBlasHandle, CUBLAS_OP_T, outputLength, inputLength, &one, weights.d, outputLength, dChainGrad.d, 1, &one, grads.d, 1));
-    //cblas_dgemv(CblasColMajor, CblasTrans, outputLength, inputLength, &one, &weights.d[0], outputLength,
-    //            &chainGrad.d[0], 1, &one, &grads.d[0], 1);
-
-    ///DEBUG!!!!!!!!!!!
-    ////Tensor cpuGrads;
-    ////grads.toCPU(cpuGrads);
 
     gradsW.constant(0.);
     TRY_CUBLAS(cublasDger_v2(sgdtk::Globals::gBlasHandle, outputLength, inputLength, &one, dChainGrad.d, 1, dInput->d, 1, gradsW.d, outputLength));
 
-    ///DEBUG!!!!!!!!!!!
-    ////Tensor cpuWGrads;
-    ///gradsW.toCPU(cpuWGrads);
-
-    //cblas_dger(CblasColMajor, outputLength, inputLength, &one, dChainGrad.d, 1, &z.d[0], 1, &gradsW.d[0], outputLength);
-
-    ////dWeightGrads.toCPU(gradsW);
-
-
     biasGrads.constant(0);
     biasGrads.add(dChainGrad);
-    ///for (int i = 0; i < outputLength; ++i)
-    ///{
-    ///    biasGrads[i] = chainGradT.d[i];
-    ///}
 
     return grads;
 

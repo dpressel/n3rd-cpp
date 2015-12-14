@@ -89,7 +89,7 @@ double SQ_M_W_1000 = 11477.130271620003;
 
 void testForward() throw(Exception)
 {
-    TemporalConvolutionalLayer *l = new TemporalConvolutionalLayer(1, 1, 3, 2);
+    auto *l = new TemporalConvolutionalLayer(1, 1, 3, 2);
     Tensor &w = (Tensor&)l->getParams();
     for (int i = 0; i < K.size(); ++i)
     {
@@ -110,7 +110,7 @@ void testForward() throw(Exception)
 void testForward2to1() throw(Exception)
 {
 
-    TemporalConvolutionalLayer *l = new TemporalConvolutionalLayer(1, 2, 3, 2);
+    auto *l = new TemporalConvolutionalLayer(1, 2, 3, 2);
 
     Tensor &weights = (Tensor&)l->getParams();
     for (int i = 0; i < IFM2K.size(); ++i)
@@ -133,7 +133,7 @@ void testForward2to1() throw(Exception)
 void testForward2to3() throw(Exception)
 {
 
-    TemporalConvolutionalLayer *l = new TemporalConvolutionalLayer(3, 2, 3, 2);
+    auto *l = new TemporalConvolutionalLayer(3, 2, 3, 2);
 
     Tensor &weights = (Tensor&)l->getParams();
     for (int i = 0; i < IFM2OFM3K.size(); ++i)
@@ -154,7 +154,7 @@ void testForward2to3() throw(Exception)
 
 void testBackward2to3() throw(Exception)
 {
-    TemporalConvolutionalLayer* l = new TemporalConvolutionalLayer(3, 2, 3, 2);
+    auto* l = new TemporalConvolutionalLayer(3, 2, 3, 2);
 
     Tensor& weights = (Tensor&)l->getParams();
     for (int i = 0; i < IFM2OFM3K.size(); ++i)

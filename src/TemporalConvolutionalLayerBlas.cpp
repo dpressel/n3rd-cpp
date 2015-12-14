@@ -33,43 +33,6 @@ TemporalConvolutionalLayerBlas::TemporalConvolutionalLayerBlas(int nK, int kL, i
 
 }
 
-void TemporalConvolutionalLayerBlas::reorderOutput(sgdtk::Tensor& unwrapped)
-{
-    //Tensor output = new Tensor(oT, nK * embedSz);
-    // We have committed to unwrapping our output matrix to the form
-    int oT =  numFrames - kW + 1;
-    for (int k = 0; k < nK; ++k)
-    {
-        for (int i = 0; i < oT; ++i)
-        {
-
-            int nIdx = k * oT + i;
-            int cIdx = i * nK + k;
-            double tmp = unwrapped[nIdx];
-            unwrapped[nIdx] = unwrapped[cIdx];
-            unwrapped[cIdx] = tmp;
-        }
-    }
-}
-
-
-void TemporalConvolutionalLayerBlas::unwrapGradFromNextLayer(const sgdtk::Tensor& chainGrad, sgdtk::Tensor& unwrapped)
-{
-    const int oT = numFrames - kW + 1;
-
-    // You could also do nIdx++ I think
-    for (int k = 0; k < nK; ++k)
-    {
-        for (int i = 0; i < oT; ++i)
-        {
-            int nIdx = k * oT + i;
-            int cIdx = i * nK + k;
-
-            unwrapped[nIdx] = chainGrad[cIdx];
-        }
-    }
-}
-
 void TemporalConvolutionalLayerBlas::unwrapInput(const sgdtk::Tensor& x)
 {
     const int oT = numFrames - kW + 1;
@@ -146,7 +109,7 @@ sgdtk::TensorI& TemporalConvolutionalLayerBlas::forward(const sgdtk::TensorI& z)
                 &(weights.d[0]), weights.dims[0], 0,
                 &(output.d[0]), oT);
 
-    reorderOutput(output);
+    //reorderOutput(output);
     return output;
 
 }
@@ -160,40 +123,31 @@ sgdtk::TensorI& TemporalConvolutionalLayerBlas::backward(sgdtk::TensorI &chainGr
 
     sgdtk::Tensor& chainGradT = (sgdtk::Tensor&)chainGrad;
 
-    sgdtk::Tensor unwrappedChainGrad({oT, nK});
-    unwrapGradFromNextLayer(chainGradT, unwrappedChainGrad);
+    //sgdtk::Tensor unwrappedChainGrad({oT, nK});
+    //unwrapGradFromNextLayer(chainGradT, unwrappedChainGrad);
     std::vector<int> unwrappedGradDims = {oT, kW * kL};
     sgdtk::Tensor unwrappedGradInput(unwrappedGradDims);
 
-    int m = unwrappedChainGrad.dims[0];
-    int k = unwrappedChainGrad.dims[1];
+    int m = oT;
+    int k = nK;
     int n = weights.dims[0];
 
     cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans, m, n, k, 1.0,
-                &(unwrappedChainGrad.d[0]), m, &(weights.d[0]), n, 0,
+                &(chainGradT.d[0]), m, &(weights.d[0]), n, 0,
                 &(unwrappedGradInput.d[0]), m);
 
 
 
     m = unwrappedInput.dims[1];
     k = unwrappedInput.dims[0];
-    n = unwrappedChainGrad.dims[1];
+    n = nK;
 
 
     cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, m, n, k, 1.0,
                 &(unwrappedInput.d[0]), k,
-                &(unwrappedChainGrad.d[0]), k, 0, &(gradsW.d[0]), m);
+                &(chainGradT.d[0]), k, 0, &(gradsW.d[0]), m);
 
 
-    // Because of the way we unrolled the embeddings matrix, we actually are allowing the previous computation
-    // to calculate values that can't and should'nt be applied to the weight
-    for (int i = 0, sz = weights.size(); i < sz; ++i)
-    {
-        if (weights.d[i] == 0.0)
-        {
-            gradsW.d[i] = 0.;
-        }
-    }
 
         // We need to update gradsW, which are (kL * embeddingSize) * kW x (nK * embeddingSize);
         /*
