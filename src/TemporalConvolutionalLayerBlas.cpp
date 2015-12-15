@@ -167,7 +167,7 @@ sgdtk::TensorI& TemporalConvolutionalLayerBlas::backward(sgdtk::TensorI &chainGr
         {
             biasGrads[l] += chainGradT[l * oT + i];
         }
-        biasGrads[l] /= embedSz;
+        /// biasGrads[l] /= embedSz;
     }
 
 
