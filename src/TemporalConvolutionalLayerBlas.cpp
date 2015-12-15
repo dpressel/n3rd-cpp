@@ -99,17 +99,26 @@ sgdtk::TensorI& TemporalConvolutionalLayerBlas::forward(const sgdtk::TensorI& z)
     output.resize({nK, 1, oT});
 
     unwrapInput(input);
-    output.constant(0.);
+    //output.constant(0.);
+
+    for (int l = 0; l < nK; ++l)
+    {
+        for (int i = 0; i < oT; ++i)
+        {
+            output.d[l * oT + i] = biases[l];
+        }
+    }
 
     cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, unwrappedInput.dims[0],
                 weights.dims[1],
                 unwrappedInput.dims[1], 1.0,
                 &(unwrappedInput.d[0]),
                 unwrappedInput.dims[0],
-                &(weights.d[0]), weights.dims[0], 0,
+                &(weights.d[0]), weights.dims[0], 1,
                 &(output.d[0]), oT);
 
     //reorderOutput(output);
+
     return output;
 
 }
@@ -150,16 +159,16 @@ sgdtk::TensorI& TemporalConvolutionalLayerBlas::backward(sgdtk::TensorI &chainGr
 
 
         // We need to update gradsW, which are (kL * embeddingSize) * kW x (nK * embeddingSize);
-        /*
-        int stride = convOutputSz * embedSz;
-        for (int l = 0; l < nK; ++l)
+
+
+    for (int l = 0; l < nK; ++l)
+    {
+        for (int i = 0; i < oT; ++i)
         {
-            for (int i = 0; i < stride; ++i)
-            {
-                this.biasGrads[l] += chainGradX[l * stride + i];
-            }
-            this.biasGrads[l] /= embedSz;
-        }*/
+            biasGrads[l] += chainGradT[l * oT + i];
+        }
+        biasGrads[l] /= embedSz;
+    }
 
 
     wrapGrad(unwrappedGradInput);

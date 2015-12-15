@@ -66,10 +66,11 @@ sgdtk::TensorI& TemporalConvolutionalLayer::backward(sgdtk::TensorI& chainGrad, 
     sgdtk::Tensor& chainGradT = (sgdtk::Tensor&)chainGrad;
 
     chainGrad.reshape({featureMapSz, embeddingSz, convOutputSz});
-    //std::vector<int> outputDims({ featureMapSz, convOutputSz, embeddingSz });
 
     int stride = convOutputSz * embeddingSz;
 
+    // Each feature map has its own single bias, which is just the sum of the the gradients that were seen by this element
+    /// chainGrad = (nK, oT)
     for (int l = 0; l < featureMapSz; ++l)
     {
         for (int i = 0; i < stride; ++i)

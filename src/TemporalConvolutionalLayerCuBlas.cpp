@@ -130,6 +130,7 @@ sgdtk::TensorI& TemporalConvolutionalLayerCuBlas::forward(const sgdtk::TensorI& 
     TRY_CUBLAS(cublasDgemm_v2(sgdtk::Globals::gBlasHandle, CUBLAS_OP_N, CUBLAS_OP_N,
                    dUnwrappedInput.dims[0], weights.dims[1], dUnwrappedInput.dims[1], &alpha, dUnwrappedInput.d, dUnwrappedInput.dims[0], weights.d, weights.dims[0], &beta, output.d, oT));
 
+    //output.add(biases);
     return output;
 
 }

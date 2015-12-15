@@ -59,7 +59,7 @@ namespace sgdtk
             {
                 length *= dim;
             }
-            d.resize(length);
+            d.resize(length, 0);
         }
 
 

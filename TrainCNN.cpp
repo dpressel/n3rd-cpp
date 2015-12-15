@@ -48,17 +48,20 @@ Learner* createTrainer(double lambda, double eta, int embeddingsAsChannels)//, c
     if (embeddingsAsChannels)
     {
         std::cout << "Use embeddings as input channels" << std::endl;
-        ///nnmf = new NeuralNetModelFactory<NeuralNetModel>( {
-        ///        // Emit 8 feature maps use a kernel width of 7 -- embeddings are 300 deep (L1)
-        ///        new TemporalConvolutionalLayerBlas(100, 300, 7),
-        ///        new MaxOverTimePoolingLayer(100), new TanhLayer(),
-        ///        new FullyConnectedLayerBlas(1, 100), new TanhLayer() });
-
+#if defined(RUN_ON_GPU)
         nnmf = new NeuralNetModelFactory<NeuralNetModelCuda>( {
                                                                       // Emit 8 feature maps use a kernel width of 7 -- embeddings are 300 deep (L1)
                                                                       new TemporalConvolutionalLayerCuBlas(100, 300, 7),
                                                                       new MaxOverTimePoolingLayerCuda(100), new TanhLayerCuda(),
                                                                       new FullyConnectedLayerCuBlas(1, 100), new TanhLayerCuda() });
+#else // Run on CPU
+
+        nnmf = new NeuralNetModelFactory<NeuralNetModel>( {
+                new TemporalConvolutionalLayerBlas(100, 300, 7),
+                new MaxOverTimePoolingLayer(100), new TanhLayer(),
+                new FullyConnectedLayerBlas(1, 100), new TanhLayer() });
+#endif
+
     }
     else
     {
