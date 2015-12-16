@@ -42,7 +42,7 @@ namespace n3rd
 
         // We could allow these as tuning parameters to control the weighting on Adagrad, but for now, just do 1, 1
         const double EPS = 1e-8;
-        void updateLayerWeights(Layer *layer, int k, double eta, double lambda);
+        void updateLayerWeights(Layer *layer, double eta, double lambda);
 
 
         /**

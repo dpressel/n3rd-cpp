@@ -36,7 +36,7 @@ void NeuralNetModel::updateWeights(const sgdtk::VectorN *vector, double eta, dou
         chainGrad = &output;
         // Now we need to update each layer's weights
 
-        updateLayerWeights(layer, k, eta, lambda);
+        updateLayerWeights(layer, eta, lambda);
 
 
 
@@ -44,7 +44,7 @@ void NeuralNetModel::updateWeights(const sgdtk::VectorN *vector, double eta, dou
     delete start;
 }
 
-void NeuralNetModel::updateLayerWeights(Layer *layer, int k, double eta, double lambda)
+void NeuralNetModel::updateLayerWeights(Layer *layer, double eta, double lambda)
 {
     sgdtk::TensorI &weights = (sgdtk::Tensor &) layer->getParams();
     if (weights.empty())
