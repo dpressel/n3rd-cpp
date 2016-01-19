@@ -111,12 +111,52 @@ Model *SGDLearner::trainEpoch(Model *model,
 
 double SGDLearner::evalOne(Model *model, const FeatureVector *fv, Metrics &metrics)
 {
+    /*
     auto y = fv->getY();
     auto fx = model->predict(fv);
     auto loss = lossFunction->loss(fx, y);
     auto error = (fx * y <= 0) ? 1 : 0;
     metrics.add(loss, error);
-    return fx;
+    return fx;*/
+    auto y = fv->getY();
+
+    auto scores = model->score(fv);
+    auto fx = scores[0];
+
+        // True in binary case
+    auto error = (fx * y <= 0) ? 1. : 0.;
+    int best = 0;
+
+    int sz = scores.size();
+    // If multi-class
+    if (sz > 1)
+    {
+        error = 0.0;
+        int yidx = (int)(y - 1);
+
+        // Support multi-label.  Assume for now that the cost function is going to want as input only the
+        // index of the correct value. We can check that they are the same by testing the index.
+        auto maxv = -100000.0;
+
+        for (int i = 0; i < sz; ++i)
+        {
+            if (scores[i] > maxv)
+            {
+                    // Label enum is index + 1
+                best = i + 1;
+                maxv = scores[i];
+            }
+        }
+        if (best != y)
+        {
+            error = 1;
+        }
+
+        fx = scores[yidx];
+    }
+    auto loss = lossFunction->loss(fx, y);
+
+    metrics.add(loss, error);
 }
 
 void SGDLearner::eval(Model *model,

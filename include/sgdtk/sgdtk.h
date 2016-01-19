@@ -28,7 +28,7 @@
 #include "sgdtk/LinearModelFactory.h"
 #include "sgdtk/LearningRateSchedule.h"
 #include "sgdtk/RobbinsMonroUpdateSchedule.h"
-#include "sgdtk/FixedLearningRate.h"
+#include "FixedLearningRateSchedule.h"
 #include "sgdtk/ConsumerProducerQueue.h"
 
 #endif

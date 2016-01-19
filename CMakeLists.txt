@@ -28,7 +28,7 @@ set(SOURCE_FILES
         include/sgdtk/DenseVectorN.h
         include/sgdtk/ModelFactory.h
         include/sgdtk/RobbinsMonroUpdateSchedule.h
-        include/sgdtk/FixedLearningRate.h
+        include/sgdtk/FixedLearningRateSchedule.h
         include/sgdtk/ConsumerProducerQueue.h
         include/sgdtk/Exception.h
         include/sgdtk/FeatureProvider.h
@@ -48,6 +48,7 @@ set(SOURCE_FILES
         include/sgdtk/SVMLightFileFeatureProvider.h
         include/sgdtk/Types.h
         include/sgdtk/Tensor.h
+        include/n3rd/ClassNLLLoss.h
         include/n3rd/NeuralNetModel.h
         include/n3rd/Layer.h
         include/n3rd/AbstractLayer.h
@@ -86,12 +87,18 @@ set(SOURCE_FILES
         src/TemporalConvolutionalLayerFFT.cpp
         include/n3rd/TemporalConvolutionalLayerBlas.h
         src/TemporalConvolutionalLayerBlas.cpp
+        include/n3rd/SpatialConvolutionalLayer.h
+        src/SpatialConvolutionalLayer.cpp
         include/n3rd/KMaxPoolingLayer.h
         src/KMaxPoolingLayer.cpp
+        include/n3rd/MaxPoolingLayer.h
+        src/MaxPoolingLayer.cpp
         include/n3rd/Word2VecModel.h
         include/n3rd/ReLULayer.h
         include/n3rd/OrderedEmbeddedDatasetReader.h
         src/OrderedEmbeddedDatasetReader.cpp
+        include/n3rd/MNISTReader.h
+        src/MNISTReader.cpp
         include/n3rd/SumEmbeddedDatasetReader.h
         src/SumEmbeddedDatasetReader.cpp
         src/Word2VecModel.cpp
@@ -131,13 +138,14 @@ add_executable(TestConv TestConv.cpp)
 add_executable(TestMaxOverTime TestMaxOverTime.cpp)
 add_executable(TestConvBlas TestConvBlas.cpp)
 add_executable(TestGPU TestGPU.cpp)
-
+add_executable(LeNetish LeNetish.cpp)
 #add_dependencies(Train sgdtk ${BLAS_LIBRARIES})
 #add_dependencies(Train sgdtk ${BLAS_LIBRARIES})
 
 target_link_libraries (Train n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m n3rdg)
 
 target_link_libraries (TrainCNN n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m n3rdg)
+target_link_libraries (LeNetish n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m n3rdg)
 target_link_libraries (TestFFT1D n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m n3rdg)
 target_link_libraries (TestFC n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m n3rdg)
 target_link_libraries (TestGPU n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m n3rdg)

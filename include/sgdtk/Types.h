@@ -75,6 +75,53 @@ namespace sgdtk
         oss << t;
         return oss.str();
     }
+
+    // These 3 methods are borrowed from CODA: https://github.com/mdaus/coda-oss
+    inline bool isBigEndianSystem()
+    {
+        // This is an endian test
+        int intVal = 1;
+        unsigned char* endianTest = (unsigned char*) & intVal;
+        return endianTest[0] != 1;
+    }
+
+    inline void byteSwap(void* buffer,
+                         unsigned short elemSize,
+                         size_t numElems)
+    {
+        unsigned char* bufferPtr = static_cast<unsigned char*>(buffer);
+        if (!bufferPtr || elemSize < 2 || !numElems)
+            return;
+
+        unsigned short half = elemSize >> 1;
+        size_t offset = 0, innerOff = 0, innerSwap = 0;
+
+        for(size_t i = 0; i < numElems; ++i, offset += elemSize)
+        {
+            for(unsigned short j = 0; j < half; ++j)
+            {
+                innerOff = offset + j;
+                innerSwap = offset + elemSize - 1 - j;
+
+                std::swap(bufferPtr[innerOff], bufferPtr[innerSwap]);
+            }
+        }
+    }
+
+    template <typename T> T byteSwap(T val)
+    {
+        size_t size = sizeof(T);
+        T out;
+
+        unsigned char* cOut = reinterpret_cast<unsigned char*>(&out);
+        unsigned char* cIn = reinterpret_cast<unsigned char*>(&val);
+        for (int i = 0, j = size - 1; i < j; ++i, --j)
+        {
+            cOut[i] = cIn[j];
+            cOut[j] = cIn[i];
+        }
+        return out;
+    }
 }
 
 #endif
