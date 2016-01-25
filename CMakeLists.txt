@@ -89,6 +89,8 @@ set(SOURCE_FILES
         src/TemporalConvolutionalLayerBlas.cpp
         include/n3rd/SpatialConvolutionalLayer.h
         src/SpatialConvolutionalLayer.cpp
+        include/n3rd/SpatialConvolutionalLayerBlas.h
+        src/SpatialConvolutionalLayerBlas.cpp
         include/n3rd/KMaxPoolingLayer.h
         src/KMaxPoolingLayer.cpp
         include/n3rd/MaxPoolingLayer.h

@@ -7,6 +7,7 @@
 #include "n3rd/NeuralNetModelFactory.h"
 #include "n3rd/TanhLayer.h"
 #include "n3rd/SpatialConvolutionalLayer.h"
+#include "n3rd/SpatialConvolutionalLayerBlas.h"
 #include "n3rd/FullyConnectedLayer.h"
 #include "n3rd/FullyConnectedLayerBlas.h"
 #include "n3rd/FullyConnectedLayerCuBlas.h"
@@ -37,13 +38,13 @@ Learner* createTrainer(double lambda, double eta)//, cudnnHandle_t handle)
 {
     NeuralNetModelFactory<>* factory = new NeuralNetModelFactory<>;
 
-    factory->addLayer(new SpatialConvolutionalLayer(6, 5, 5, {1,32,32}));
+    factory->addLayer(new SpatialConvolutionalLayerBlas(6, 5, 5, {1,32,32}));
     factory->addLayer(new MaxPoolingLayer(2, 2, {6, 28, 28}));
     factory->addLayer(new TanhLayer());
-    factory->addLayer(new SpatialConvolutionalLayer(16, 5, 5, {6,14,14}));
+    factory->addLayer(new SpatialConvolutionalLayerBlas(16, 5, 5, {6,14,14}));
     factory->addLayer(new MaxPoolingLayer(2, 2, {16, 10, 10}));
     factory->addLayer(new TanhLayer());
-    factory->addLayer(new SpatialConvolutionalLayer(128, 5, 5, {16,5,5}));
+    factory->addLayer(new SpatialConvolutionalLayerBlas(128, 5, 5, {16,5,5}));
     factory->addLayer(new TanhLayer());
     factory->addLayer(new FullyConnectedLayerBlas(84, 128));
     factory->addLayer(new TanhLayer());
