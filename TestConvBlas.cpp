@@ -346,13 +346,17 @@ void testBackward2D() throw(Exception)
     Tensor& output = (Tensor&) l->forward(d);
     Tensor& outputb = (Tensor&) lb->forward(d);
 
-    output.scale(1/1000.);
-    outputb.scale(1/1000.);
+    Tensor error(output);
+    error.scale(1/1000.);
 
-    Tensor& bwd = (Tensor&)l->backward(output, 0);
+    Tensor errorb(outputb);
+    errorb.scale(1/1000.);
 
-    Tensor& bwdb = (Tensor&)l->backward(outputb, 0);
 
+
+    Tensor& bwdb = (Tensor&)lb->backward(errorb, 0);
+
+    Tensor& bwd = (Tensor&)l->backward(error, 0);
     for (int i = 0; i < bwd.size(); ++i)
     {
         assertEqualsF(bwd[i], bwdb[i], 1e-6);
@@ -389,15 +393,19 @@ void testBackward2DGPU() throw(Exception)
     Tensor& output = (Tensor&) l->forward(d);
     Tensor& dOutputb = (Tensor&) lb->forward(dD);
 
-    output.scale(1/1000.);
-    dOutputb.scale(1/1000.);
+    Tensor error(output);
+    error.scale(1/1000.);
 
-    Tensor& bwd = (Tensor&)l->backward(output, 0);
+    CudaTensor dErrorb(dOutputb);
+    dErrorb.scale(1/1000.);
 
-    CudaTensor& dBwdb = (CudaTensor&)l->backward(dOutputb, 0);
+    Tensor& bwd = (Tensor&)l->backward(error, 0);
+
+    CudaTensor& dBwdb = (CudaTensor&)lb->backward(dErrorb, 0);
 
     Tensor bwdb(dBwdb.dims);
     dBwdb.toCPU(bwdb);
+    
     for (int i = 0; i < bwd.size(); ++i)
     {
         assertEqualsF(bwd[i], bwdb[i], 1e-6);

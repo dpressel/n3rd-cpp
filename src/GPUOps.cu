@@ -139,7 +139,7 @@ __global__ void devBiasUpdates(double* biasParams, double* biasGrads, float eta,
     int i = blockDim.x * blockIdx.x + threadIdx.x;
     if (i < N)
     {
-        auto delta = -(biasGrads[i] * eta);// * 0.01; // last number is total fudge
+        auto delta = -(biasGrads[i] * eta);
         biasParams[i] += delta;
         biasGrads[i] = 0;
     }
@@ -196,6 +196,33 @@ __global__ void devMaxPooling(double *odata, int* origin, double* idata, int hei
 
 }
 
+__global__ void devUnwrapInput2(double *x, double* unwrappedInput, const int kL, int kH, int kW, int iH, int iW)
+{
+
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    int j = blockIdx.y * blockDim.y + threadIdx.y;
+    int oH = iH - kH + 1;
+    int oW = iW - kW + 1;
+
+    // z += kL*kH+kW
+    if (j < oW && i < oH)
+    {
+        for (int k = 0; k < kL; ++k)
+        {
+            for (int m = 0; m < kH; ++m)
+            {
+                for (int n = 0; n < kW; ++n)
+                {
+                    int offset = (k * iH + i + m) * iW + j + n;
+                    int z = (((k * kH + m) * kW + n) * oH + i) * oW + j;
+                    unwrappedInput[z] = x[offset];
+                }
+
+            }
+        }
+    }
+
+}
 __global__ void devTranspose(double *odata, double *idata, int height, int width)
 {
     __shared__ double tile[TILE_DIM][TILE_DIM+1];
@@ -323,6 +350,20 @@ void n3rdgUnwrapInput(double *x, double* unwrapped, int L, int kW, int iT)
 {
     int blocksPerGrid = L;
     devUnwrapInput<<<blocksPerGrid, 256>>>(x, unwrapped, kW, iT);
+}
+
+void n3rdgUnwrapInput2(double* x, double* unwrapped, int L, int kH, int kW, int iH, int iW)
+{
+
+    dim3 threadsPerBlock;
+    threadsPerBlock.x = 16;
+    threadsPerBlock.y = 16;
+    dim3 blocksPerGrid;
+
+    blocksPerGrid.x = (iH + threadsPerBlock.x - 1) / threadsPerBlock.x;
+    blocksPerGrid.y = (iW + threadsPerBlock.y - 1) / threadsPerBlock.y;
+
+    devUnwrapInput2<<<blocksPerGrid, threadsPerBlock>>>(x, unwrapped, L, kH, kW, iH, iW);
 }
 
 // We are putting a hard limit on N here, notice its capped at 256!

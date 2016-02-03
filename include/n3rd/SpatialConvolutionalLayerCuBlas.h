@@ -8,7 +8,7 @@
 #include <cmath>
 #include <cstdlib>
 #include "n3rd/FilterOps.h"
-
+#include "n3rd/GPUOps.h"
 namespace n3rd
 {
 
