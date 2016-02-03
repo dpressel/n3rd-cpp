@@ -87,10 +87,8 @@ void TemporalConvolutionalLayerBlas::wrapGrad(const sgdtk::Tensor& unwrapped)
 
 sgdtk::TensorI& TemporalConvolutionalLayerBlas::forward(const sgdtk::TensorI& z)
 {
-    // For convolutions, we should assume that our VectorN is truly a matrix
-    // and the usual math applies
-
     const sgdtk::Tensor& zT = (const sgdtk::Tensor&)z;
+
     numFrames = z.size() / kL;
     input = zT;
     grads.resize({kL, 1, numFrames});

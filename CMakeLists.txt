@@ -83,6 +83,8 @@ set(SOURCE_FILES
         src/TemporalConvolutionalLayer.cpp
         include/n3rd/TemporalConvolutionalLayerCuBlas.h
         src/TemporalConvolutionalLayerCuBlas.cpp
+        include/n3rd/SpatialConvolutionalLayerCuBlas.h
+        src/SpatialConvolutionalLayerCuBlas.cpp
         include/n3rd/TemporalConvolutionalLayerFFT.h
         src/TemporalConvolutionalLayerFFT.cpp
         include/n3rd/TemporalConvolutionalLayerBlas.h

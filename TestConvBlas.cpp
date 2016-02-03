@@ -7,6 +7,9 @@
 #include "n3rd/TemporalConvolutionalLayer.h"
 #include "n3rd/TemporalConvolutionalLayerCuBlas.h"
 #include "n3rd/TemporalConvolutionalLayerBlas.h"
+#include "n3rd/SpatialConvolutionalLayerBlas.h"
+#include "n3rd/SpatialConvolutionalLayerCuBlas.h"
+#include "n3rd/SpatialConvolutionalLayer.h"
 using namespace sgdtk;
 using namespace n3rd;
 
@@ -76,6 +79,27 @@ double SQ_M_W_1000_1CHAN = 2383.197216;
 std::vector<double> OFM3IFM2G_1000_1CHAN = {
         -0.14, -0.057, 0.31499999999, 0.873, 1.090999999, 0.8219999, 1.963, 4.953, 9.072, 11.7359999, 9.293, 5.415
 
+};
+
+
+std::vector<double> K1222 = {
+        .1, -.2, .3, -.4,
+        -.7, .8, -.9, .11
+};
+
+
+std::vector<double> IFM243 = {
+        1,    3,    5,    2,    4,    6,
+        3,    5,    7,    4,    6,    8,
+        5,    7,    9,    6,    8,   10,
+        7,    9,   11,    8,   10,   12
+
+};
+
+std::vector<double> OFM132 = {
+        -3.92, -5.7,
+        -4.81, -6.59,
+        -5.7, -7.48,
 };
 
 
@@ -205,6 +229,181 @@ void testUnwrap()
         assertEqualsF(unwrappedInput[i], unwrappedGPU[i], 1e-6);
     }
 }
+
+
+void testForward2D() throw(Exception)
+{
+    int nK = 1;
+    int kH = 2;
+    int kW = 2;
+    std::vector<int> inputDims = {2,4,3};
+    auto* l = new SpatialConvolutionalLayer(nK, kH, kW, inputDims);
+    auto* lb = new SpatialConvolutionalLayerBlas(nK, kH, kW, inputDims);
+
+    auto& weights = (Tensor&)l->getParams();
+    auto& weightsb = (Tensor&)lb->getParams();
+    // Because there are no output feature maps, memory is same for col and row major
+    for (int i = 0; i < K1222.size(); ++i)
+    {
+        weights[i] = K1222[i];
+        weightsb[i] = K1222[i];
+    }
+
+
+    Tensor d(IFM243, inputDims);
+    Tensor& output = (Tensor&) l->forward(d);
+
+    assertEquals(output.dims[0], 1);
+    assertEquals(output.dims[1], 3);
+    assertEquals(output.dims[2], 2);
+
+    Tensor& outputb = (Tensor&) lb->forward(d);
+
+
+    for (int i = 0; i < output.size(); ++i)
+    {
+        assertEqualsF(OFM132[i], output[i], 1e-3);
+        assertEqualsF(OFM132[i], outputb[i], 1e-3);
+    }
+
+}
+
+
+void testForward2DGPU() throw(Exception)
+{
+    int nK = 1;
+    int kH = 2;
+    int kW = 2;
+    int kL = 2;
+    const int ncols = 3;
+    const int nrows = 4;
+
+    std::vector<int> inputDims = {kL, nrows, ncols};
+
+    auto* l = new SpatialConvolutionalLayerCuBlas(nK, kH, kW, inputDims);
+
+    auto& gpuWeights = (CudaTensor&)l->getParams();
+
+    Tensor weights(gpuWeights.dims);
+
+
+    int n = 0;
+
+    // Because there are no output feature maps, memory is same for col and row major
+    for (int i = 0; i < K1222.size(); ++i)
+    {
+        weights[i] = K1222[i];
+    }
+
+    Tensor over;
+
+    gpuWeights.toCPU(over);
+
+    gpuWeights.fromCPU(weights, false);
+    Tensor d(IFM243, inputDims);
+
+    CudaTensor dD(d);
+
+    Tensor z;
+    dD.toCPU(z);
+    auto& dOutput = (CudaTensor&)l->forward(dD);
+
+    Tensor output;
+    dOutput.toCPU(output);
+
+    assertEquals(output.dims[0], 1);
+    assertEquals(output.dims[1], 3);
+    assertEquals(output.dims[2], 2);
+
+    for (int i = 0; i < output.size(); ++i)
+    {
+        assertEqualsF(OFM132[i], output[i], 1e-3);
+    }
+
+}
+
+
+void testBackward2D() throw(Exception)
+{
+    int nK = 1;
+    int kH = 2;
+    int kW = 2;
+    std::vector<int> inputDims = {2,4,3};
+    auto* l = new SpatialConvolutionalLayer(nK, kH, kW, inputDims);
+    auto* lb = new SpatialConvolutionalLayerBlas(nK, kH, kW, inputDims);
+
+    auto& weights = (Tensor&)l->getParams();
+    auto& weightsb = (Tensor&)lb->getParams();
+    // Because there are no output feature maps, memory is same for col and row major
+    for (int i = 0; i < K1222.size(); ++i)
+    {
+        weights[i] = K1222[i];
+        weightsb[i] = K1222[i];
+    }
+
+
+    Tensor d(IFM243, inputDims);
+    Tensor& output = (Tensor&) l->forward(d);
+    Tensor& outputb = (Tensor&) lb->forward(d);
+
+    output.scale(1/1000.);
+    outputb.scale(1/1000.);
+
+    Tensor& bwd = (Tensor&)l->backward(output, 0);
+
+    Tensor& bwdb = (Tensor&)l->backward(outputb, 0);
+
+    for (int i = 0; i < bwd.size(); ++i)
+    {
+        assertEqualsF(bwd[i], bwdb[i], 1e-6);
+    }
+}
+
+
+void testBackward2DGPU() throw(Exception)
+{
+    int nK = 1;
+    int kH = 2;
+    int kW = 2;
+    std::vector<int> inputDims = {2,4,3};
+    auto* l = new SpatialConvolutionalLayer(nK, kH, kW, inputDims);
+    auto* lb = new SpatialConvolutionalLayerCuBlas(nK, kH, kW, inputDims);
+
+    auto& weights = (Tensor&)l->getParams();
+    auto& dWeightsb = (CudaTensor&)lb->getParams();
+
+    Tensor weightsb(dWeightsb.dims);
+
+
+    // Because there are no output feature maps, memory is same for col and row major
+    for (int i = 0; i < K1222.size(); ++i)
+    {
+        weights[i] = K1222[i];
+        weightsb[i] = K1222[i];
+    }
+
+    dWeightsb.fromCPU(weightsb);
+
+    Tensor d(IFM243, inputDims);
+    CudaTensor dD(d);
+    Tensor& output = (Tensor&) l->forward(d);
+    Tensor& dOutputb = (Tensor&) lb->forward(dD);
+
+    output.scale(1/1000.);
+    dOutputb.scale(1/1000.);
+
+    Tensor& bwd = (Tensor&)l->backward(output, 0);
+
+    CudaTensor& dBwdb = (CudaTensor&)l->backward(dOutputb, 0);
+
+    Tensor bwdb(dBwdb.dims);
+    dBwdb.toCPU(bwdb);
+    for (int i = 0; i < bwd.size(); ++i)
+    {
+        assertEqualsF(bwd[i], bwdb[i], 1e-6);
+    }
+}
+
 
 
 void testForwardWordVecAsInChannels() throw(Exception)
@@ -519,6 +718,11 @@ int main(int argc, char **argv)
     try
     {
         initCuBlas();
+        EVAL(testForward2D());
+        EVAL(testForward2DGPU());
+        EVAL(testBackward2D());
+        EVAL(testBackward2DGPU());
+
         EVAL(testForwardWordVecAsInChannels());
         EVAL(testForward2to1WordVecAsInChannels());
         EVAL(testForward2to3WordVecAsInChannels());

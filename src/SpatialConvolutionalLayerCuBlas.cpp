@@ -1,9 +1,9 @@
-#include "n3rd/SpatialConvolutionalLayerBlas.h"
+#include "n3rd/SpatialConvolutionalLayerCuBlas.h"
 
 using namespace n3rd;
 using namespace sgdtk;
 
-SpatialConvolutionalLayerBlas::SpatialConvolutionalLayerBlas(int nK, int kH, int kW, std::vector<int> inputDims)
+SpatialConvolutionalLayerCuBlas::SpatialConvolutionalLayerCuBlas(int nK, int kH, int kW, std::vector<int> inputDims)
 {
     this->nK = nK;
     int inputDimsSz = inputDims.size();
@@ -19,8 +19,8 @@ SpatialConvolutionalLayerBlas::SpatialConvolutionalLayerBlas(int nK, int kH, int
 
 
     // The unwrapped input is tap-unrolled with a width that is kH * kW * nK, and a height that is the number of lags
-    unwrappedInput.resize({output.dims[1]*output.dims[2], kH * kW * kL});
-    unwrappedGradInput.resize(unwrappedInput.dims);
+    dUnwrappedInput.resize({output.dims[1]*output.dims[2], kH * kW * kL});
+    dUnwrappedGradInput.resize(dUnwrappedInput.dims);
     weights.resize({kL * kH * kW, nK});
     weightAccum.resize({kL * kH * kW, nK});
     gradsW.resize({kL * kH * kW, nK});
@@ -38,20 +38,26 @@ SpatialConvolutionalLayerBlas::SpatialConvolutionalLayerBlas(int nK, int kH, int
     double stdv2 = stdv * 2;
 
     // For each kernel, randomly initialize all weights
-    for (int i = 0; i < weights.size(); ++i)
+    Tensor cWeights(weights.dims);
+    for (int i = 0; i < cWeights.size(); ++i)
     {
 
         double number = distribution(generator);
         double d = number * stdv2 - stdv;
-        weights[i] = d;
+        cWeights[i] = d;
     }
+    weights.fromCPU(cWeights, false);
 
 }
 
-void SpatialConvolutionalLayerBlas::unwrapInput(const sgdtk::Tensor& x)
+// TODO: replace with nerdg function
+void SpatialConvolutionalLayerCuBlas::unwrapInput(const sgdtk::CudaTensor& x)
 {
 
+    Tensor xT;
+    Tensor unwrappedInput(dUnwrappedInput.dims);
 
+    x.toCPU(xT);
     int z = 0;
 
     const int oH = iH - kH + 1;
@@ -71,22 +77,29 @@ void SpatialConvolutionalLayerBlas::unwrapInput(const sgdtk::Tensor& x)
                     {
                         // This is then image(k, i + m, j + n)
                         int offset = (k * iH + i + m) * iW + j + n;
-                        unwrappedInput[z] = x[offset];
+                        unwrappedInput[z] = xT[offset];
                         ++z;
                     }
                 }
             }
         }
     }
+    dUnwrappedInput.fromCPU(unwrappedInput);
 
 }
 
-void SpatialConvolutionalLayerBlas::wrapGrad(sgdtk::Tensor& unwrapped)
+// TODO: replace with nerdg
+void SpatialConvolutionalLayerCuBlas::wrapGrad(sgdtk::CudaTensor& dUnwrapped)
 {
+
+    sgdtk::Tensor unwrapped;
+
+    dUnwrapped.toCPU(unwrapped);
+
+    sgdtk::Tensor cGrads(grads.dims);
 
     const int oH = iH - kH + 1;
     const int oW = iW - kW + 1;
-
 
     // In the blas case, we need to write in column major, which means write down one lag, then move up to the next
     int z = 0;
@@ -101,7 +114,7 @@ void SpatialConvolutionalLayerBlas::wrapGrad(sgdtk::Tensor& unwrapped)
                     for (int j = 0; j < oW; ++j)
                     {
                         int offset = (k * iH + i + m) * iW + j + n;
-                        grads[offset] += unwrapped[z];
+                        cGrads[offset] += unwrapped[z];
                         z++;
                     }
                 }
@@ -109,22 +122,23 @@ void SpatialConvolutionalLayerBlas::wrapGrad(sgdtk::Tensor& unwrapped)
             }
         }
     }
-
+    grads.fromCPU(cGrads);
 
 
 }
 
-sgdtk::TensorI& SpatialConvolutionalLayerBlas::forward(const sgdtk::TensorI& z)
+sgdtk::TensorI& SpatialConvolutionalLayerCuBlas::forward(const sgdtk::TensorI& z)
 {
-    const sgdtk::Tensor& input = (const sgdtk::Tensor&)z;
+    const sgdtk::CudaTensor& input = (const sgdtk::CudaTensor&)z;
     grads.constant(0.);
 
+    //n3rdgUnwrapInput(input);
+
     unwrapInput(input);
-
-
     const int oH = iH - kH + 1;
     const int oW = iW - kW + 1;
-    for (int l = 0; l < nK; ++l)
+    output.constant(0.);
+/*    for (int l = 0; l < nK; ++l)
     {
         for (int i = 0; i < oH; ++i)
         {
@@ -134,24 +148,27 @@ sgdtk::TensorI& SpatialConvolutionalLayerBlas::forward(const sgdtk::TensorI& z)
             }
         }
     }
+*/
 
-    cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, unwrappedInput.dims[0],
+    double alpha = 1.0;
+    double beta = 1.0;
+
+    TRY_CUBLAS(cublasDgemm_v2(sgdtk::Globals::gBlasHandle, CUBLAS_OP_N, CUBLAS_OP_N, dUnwrappedInput.dims[0],
                 weights.dims[1],
-                unwrappedInput.dims[1], 1.0,
-                &(unwrappedInput.d[0]),
-                unwrappedInput.dims[0],
-                &(weights.d[0]), weights.dims[0], 1.0,
-                &(output.d[0]), unwrappedInput.dims[0]);
+                dUnwrappedInput.dims[1], &alpha,
+                dUnwrappedInput.d,
+                dUnwrappedInput.dims[0],
+                weights.d, weights.dims[0], &beta,
+                output.d, dUnwrappedInput.dims[0]));
 
     return output;
 
 }
 
-
-sgdtk::TensorI& SpatialConvolutionalLayerBlas::backward(sgdtk::TensorI& chainGrad, double y)
+sgdtk::TensorI& SpatialConvolutionalLayerCuBlas::backward(sgdtk::TensorI& chainGrad, double y)
 {
 
-    sgdtk::Tensor& chainGradT = (sgdtk::Tensor&) chainGrad;
+    sgdtk::CudaTensor& chainGradT = (sgdtk::CudaTensor&) chainGrad;
 
 
     const int oH = iH - kH + 1;
@@ -166,17 +183,18 @@ sgdtk::TensorI& SpatialConvolutionalLayerBlas::backward(sgdtk::TensorI& chainGra
     int k = nK;
     int n = weights.dims[0];
 
+    double alpha = 1.0;
+    double beta = 0.0;
 
-    cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans, m, n, k, 1.0, &(chainGradT.d[0]), m,
-                &(weights.d[0]), n, 0.0, &(unwrappedGradInput.d[0]), m);
+    TRY_CUBLAS(cublasDgemm_v2(sgdtk::Globals::gBlasHandle, CUBLAS_OP_N, CUBLAS_OP_T, m, n, k, &alpha, chainGradT.d, m, weights.d, n, &beta, dUnwrappedGradInput.d, m));
 
-    m = unwrappedInput.dims[1];
-    k = unwrappedInput.dims[0];
+    m = dUnwrappedInput.dims[1];
+    k = dUnwrappedInput.dims[0];
     n = nK;
 
-    cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, m, n, k, 1.0, &(unwrappedInput.d[0]), k,
-                &(chainGradT.d[0]), k, 0.0, &(gradsW.d[0]), m);
 
+    TRY_CUBLAS(cublasDgemm_v2(sgdtk::Globals::gBlasHandle, CUBLAS_OP_T, CUBLAS_OP_N, m, n, k, &alpha, dUnwrappedInput.d, k, chainGradT.d, k, &beta, gradsW.d, m));
+/* TODO
     for (int l = 0; l < nK; ++l)
     {
         for (int i = 0; i < oH; ++i)
@@ -188,8 +206,11 @@ sgdtk::TensorI& SpatialConvolutionalLayerBlas::backward(sgdtk::TensorI& chainGra
         }
 
     }
+*/
+    wrapGrad(dUnwrappedGradInput);
 
-    wrapGrad(unwrappedGradInput);
+    //n3rdgWrapGrad(dUnwrappedGradInput.d, grads.d, nK, kW, oT);
+
     return grads;
 
 }

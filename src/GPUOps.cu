@@ -118,6 +118,7 @@ __global__ void devMaxOverTimeBackward(double* dChainGrad, int* dOrigin, double*
         dGrads[inAddr] = dChainGrad[i];
     }
 }
+
 // Perform adagrad weight updates
 __global__ void devAdagradWeightUpdates(double * weights, double* weightGrads, double* gg, float eta, float lambda, int N)
 {
@@ -145,6 +146,55 @@ __global__ void devBiasUpdates(double* biasParams, double* biasGrads, float eta,
 
 }
 
+__global__ void devMaxPoolingBackward(double* odata, int* origin, double* idata, int height, int width, int dh, int dw) {
+
+    int oi = blockDim.x * blockIdx.x + threadIdx.x;
+    int oj = blockDim.y * blockIdx.y + threadIdx.y;
+    int oW = width / dw;
+    ///double mx0 = odata[oi * oW + oj];
+
+    for (int i = 0; i < dh; ++i)
+    {
+        for (int j = 0; j < dw; ++j)
+        {
+            int ii = blockDim.x * blockIdx.x + threadIdx.x * dh + i;
+            int ij = blockDim.y * blockIdx.y + threadIdx.y * dw + j;
+            int idx = ii * width + ij;
+            idata[idx] = origin[oi * oW + oj] == idx ? odata[oi * oW + oj]: 0;
+        }
+    }
+}
+
+__global__ void devMaxPooling(double *odata, int* origin, double* idata, int height, int width, int dh, int dw)
+{
+
+    int oi = blockDim.x * blockIdx.x + threadIdx.x;
+    int oj = blockDim.y * blockIdx.y + threadIdx.y;
+    int oW = width / dw;
+    //int oH = height / dh;
+
+    for (int i = 0; i < dh; ++i)
+    {
+        for (int j = 0; j < dw; ++j)
+        {
+            double mx0 = odata[oi * oW + oj];
+            int ii = blockDim.x * blockIdx.x + threadIdx.x * dh + i;
+            int ij = blockDim.y * blockIdx.y + threadIdx.y * dw + j;
+            if (ii < height && ij < width)
+            {
+                int idx = ii * width + ij;
+
+                double curr = idata[idx];
+                if (curr > mx0)
+                {
+                    odata[oi * oW + oj] = curr;
+                    origin[oi * oW + oj] = idx;
+                }
+            }
+        }
+    }
+
+}
 
 __global__ void devTranspose(double *odata, double *idata, int height, int width)
 {
@@ -178,7 +228,7 @@ __global__ void devTranspose(double *odata, double *idata, int height, int width
 }
 
 // TODO: Not optimized at all!
-__global__ void devWrapGrad(double* unwrapped, double* grads, int L, int kW, int oT)
+__global__ void devWrapGrad(double* unwrapped, double* grads, int kW, int oT)
 {
     const int k = blockIdx.x;
     const int iT = oT + kW - 1;
@@ -197,12 +247,22 @@ __global__ void devWrapGrad(double* unwrapped, double* grads, int L, int kW, int
     }
 }
 
-__global__ void devUnwrapInput(double *x, double* unwrappedInput, int L, int kW, int iT)
+/*
+ *  int offset = (k * iH + i + m) * iW + j + n;
+                        grads[offset] += unwrapped[z];
+                        z++;
+ */
+
+
+
+__global__ void devUnwrapInput(double *x, double* unwrappedInput, int kW, int iT)
 {
     const int k = blockIdx.x;
 
     for (int m = 0; m < kW; ++m)
     {
+        // We are expecting the number of threads to be less than the length of the signal
+        // this makes sense for some 1D data, like NLP, but probably not others
         if (threadIdx.x < iT)
         {
             const int oT = iT - kW + 1;
@@ -211,7 +271,6 @@ __global__ void devUnwrapInput(double *x, double* unwrappedInput, int L, int kW,
             unwrappedInput[n] = x[offset];
         }
     }
-
 }
 
 void n3rdgTranspose(double *outputMx, double* inputMx, int height, int width)
@@ -219,6 +278,17 @@ void n3rdgTranspose(double *outputMx, double* inputMx, int height, int width)
     dim3 grid((int)ceil(width/(double)TILE_DIM), (int)ceil(height/(double)TILE_DIM));
     dim3 threads(TILE_DIM,BLOCK_ROWS);
     devTranspose<<<grid, threads>>>(outputMx, inputMx, height, width);
+}
+
+void n3rdgMaxPoolingForward(double* outputMx, int* originMx, double* inputMx, int height, int width, int dh, int dw)
+{
+    int oW = width / dw;
+    int oH = height / dh;
+
+    // Check if a thread is outside valid range
+    dim3 grid((int)ceil(oW/(double)TILE_DIM), (int)ceil(oH/(double)TILE_DIM));
+    dim3 threads(TILE_DIM,TILE_DIM);
+    devMaxPooling<<<grid, threads>>>(outputMx, originMx, inputMx, height, width, dh, dw);
 }
 
 void n3rdgAdagradWeightUpdates(double *weights, double *weightGrads, double *gg, float eta, float lambda, int N)
@@ -245,14 +315,14 @@ void n3rdgBiasUpdates(double* biasParams, double* biasGrads, float eta, int N)
 void n3rdgWrapGrad(double* unwrapped, double* grads, int L, int kW, int oT)
 {
     int blocksPerGrid = L;
-    devWrapGrad<<<blocksPerGrid, 256>>>(unwrapped, grads, L, kW, oT);
+    devWrapGrad<<<blocksPerGrid, 256>>>(unwrapped, grads, kW, oT);
 }
 
 
 void n3rdgUnwrapInput(double *x, double* unwrapped, int L, int kW, int iT)
 {
     int blocksPerGrid = L;
-    devUnwrapInput<<<blocksPerGrid, 256>>>(x, unwrapped, L, kW, iT);
+    devUnwrapInput<<<blocksPerGrid, 256>>>(x, unwrapped, kW, iT);
 }
 
 // We are putting a hard limit on N here, notice its capped at 256!

@@ -12,8 +12,6 @@ TemporalConvolutionalLayerCuBlas::TemporalConvolutionalLayerCuBlas(int nK, int k
     sgdtk::Tensor cpuWeights({kL * kW, nK});
     weights.resize(cpuWeights.dims);
     weightAccum.resize(weights.dims, 0);
-    ////dWeights.resize(weights.dims);
-    ////dWeightGrads.resize(weights.dims);
     gradsW.resize(weights.dims);
     biases.resize({nK}, 0);
     biasGrads.resize({nK}, 0);
@@ -35,100 +33,23 @@ TemporalConvolutionalLayerCuBlas::TemporalConvolutionalLayerCuBlas(int nK, int k
     weights.fromCPU(cpuWeights, false);
 }
 
-
-void TemporalConvolutionalLayerCuBlas::unwrapInput(const sgdtk::CudaTensor& dX)
-{
-    // FIXME!!!!
-
-    sgdtk::Tensor x(dX.dims);
-    dX.toCPU(x, false);
-    const int oT = numFrames - kW + 1;
-
-    dUnwrappedInput.resize({oT, kW * kL});
-
-
-    sgdtk::Tensor unwrappedInput(dUnwrappedInput.dims);
-    int n = 0;
-
-
-    for (int k = 0; k < kL; ++k)
-    {
-
-        for (int m = 0; m < kW; ++m)
-        {
-            for (int i = 0; i < oT; ++i)
-            {
-
-                int offset = k * numFrames + i + m;
-                unwrappedInput[n] = x[offset];
-                ++n;
-            }
-        }
-    }
-    dUnwrappedInput.fromCPU(unwrappedInput, false);
-}
-
-void TemporalConvolutionalLayerCuBlas::wrapGrad(const sgdtk::CudaTensor& unwrapped)
-{
-
-    sgdtk::Tensor unwrappedT(unwrapped.dims);
-    unwrapped.toCPU(unwrappedT, false);
-
-    const int oT = unwrapped.dims[0];
-    const int iT = oT + kW - 1;
-    assert(iT == grads.dims[2]);
-    const int kL = grads.dims[0];
-    const int embedSz = grads.dims[1];
-    assert(1 == embedSz);
-
-    sgdtk::Tensor gradsT(grads.dims);
-
-    // In the blas case, we need to write in column major, which means write down one lag, then move up to the next
-    int n = 0;
-    // 1 .. 100
-    // n = (k * kW + m) * oT + i;
-    for (int k = 0; k < kL; ++k)
-    {
-        // 7
-        for (int m = 0; m < kW; ++m)
-        {
-            // 1 - 256
-            for (int i = 0; i < oT; ++i)
-            {
-                int offset = k * iT + i + m;
-                    // x(kL, iT, embedSz)
-                gradsT[offset] += unwrappedT[n];
-                n++;
-            }
-        }
-    }
-
-    grads.fromCPU(gradsT, false);
-
-}
-
 sgdtk::TensorI& TemporalConvolutionalLayerCuBlas::forward(const sgdtk::TensorI& z)
 {
     const sgdtk::CudaTensor& zT = (const sgdtk::CudaTensor&)z;
-    // For convolutions, we should assume that our VectorN is truly a matrix
-    // and the usual math applies
 
     numFrames = z.size() / kL;
     grads.resize({kL, 1, numFrames});
-
+    grads.constant(0.);
     const int oT = numFrames - kW + 1;
-
     output.resize({nK, 1, oT});
-    ///////unwrapInput(zT);
-
     dUnwrappedInput.resize({oT, kW * kL});
     n3rdgUnwrapInput(zT.d, dUnwrappedInput.d, kL, kW, numFrames);
-
 
     double alpha = 1.0;
     double beta = 0.0;
     TRY_CUBLAS(cublasDgemm_v2(sgdtk::Globals::gBlasHandle, CUBLAS_OP_N, CUBLAS_OP_N,
-                   dUnwrappedInput.dims[0], weights.dims[1], dUnwrappedInput.dims[1], &alpha, dUnwrappedInput.d, dUnwrappedInput.dims[0], weights.d, weights.dims[0], &beta, output.d, oT));
+                   dUnwrappedInput.dims[0], weights.dims[1], dUnwrappedInput.dims[1], &alpha, dUnwrappedInput.d, dUnwrappedInput.dims[0],
+                              weights.d, weights.dims[0], &beta, output.d, oT));
 
     //output.add(biases);
     return output;

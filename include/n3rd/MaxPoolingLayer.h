@@ -24,7 +24,6 @@ namespace n3rd
     class MaxPoolingLayer : public AbstractLayer<>
     {
 
-        int numFrames;
         std::vector<int> origin;
         std::vector<int> inputDims;
         int dh;

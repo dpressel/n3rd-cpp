@@ -17,8 +17,6 @@ namespace n3rd
     class TemporalConvolutionalLayerCuBlas : public AbstractLayer<sgdtk::CudaTensor>
     {
 
-        void unwrapInput(const sgdtk::CudaTensor& x);
-        void wrapGrad(const sgdtk::CudaTensor& unwrapped);
         int nK;
         int kL;
         int kW;
