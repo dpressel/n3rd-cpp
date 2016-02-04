@@ -132,13 +132,8 @@ sgdtk::TensorI& SpatialConvolutionalLayerCuBlas::forward(const sgdtk::TensorI& z
     const sgdtk::CudaTensor& input = (const sgdtk::CudaTensor&)z;
     grads.constant(0.);
 
-//    CudaTensor alt(dUnwrappedInput.dims);
-//    n3rdgUnwrapInput2(input.d, alt.d, kL, kH, kW, iH, iW);
-
     n3rdgUnwrapInput2(input.d, dUnwrappedInput.d, kL, kH, kW, iH, iW);
 
-    //std::cout << "GOT HERRE" << std::endl;
-  //  unwrapInput(input);
     const int oH = iH - kH + 1;
     const int oW = iW - kW + 1;
     output.constant(0.);
@@ -211,8 +206,9 @@ sgdtk::TensorI& SpatialConvolutionalLayerCuBlas::backward(sgdtk::TensorI& chainG
 
     }
 */
-    wrapGrad(dUnwrappedGradInput);
+    ///wrapGrad(dUnwrappedGradInput);
 
+    n3rdgWrapGrad2(dUnwrappedGradInput.d, grads.d, kL, kH, kW, iH, iW);
     //n3rdgWrapGrad(dUnwrappedGradInput.d, grads.d, nK, kW, oT);
 
     return grads;

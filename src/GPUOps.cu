@@ -204,7 +204,6 @@ __global__ void devUnwrapInput2(double *x, double* unwrappedInput, const int kL,
     int oH = iH - kH + 1;
     int oW = iW - kW + 1;
 
-    // z += kL*kH+kW
     if (j < oW && i < oH)
     {
         for (int k = 0; k < kL; ++k)
@@ -223,6 +222,33 @@ __global__ void devUnwrapInput2(double *x, double* unwrappedInput, const int kL,
     }
 
 }
+
+
+__global__ void devWrapGrad2(double *unwrapped, double* grads, const int kL, int kH, int kW, int iH, int iW)
+{
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    int j = blockIdx.y * blockDim.y + threadIdx.y;
+    int oH = iH - kH + 1;
+    int oW = iW - kW + 1;
+
+    if (j < oW && i < oH)
+    {
+        for (int k = 0; k < kL; ++k)
+        {
+            for (int m = 0; m < kH; ++m)
+            {
+                for (int n = 0; n < kW; ++n)
+                {
+                    int offset = (k * iH + i + m) * iW + j + n;
+                    int z = (((k * kH + m) * kW + n) * oH + i) * oW + j;
+                    grads[offset] += unwrapped[z];
+                }
+
+            }
+        }
+    }
+}
+
 __global__ void devTranspose(double *odata, double *idata, int height, int width)
 {
     __shared__ double tile[TILE_DIM][TILE_DIM+1];
@@ -339,20 +365,20 @@ void n3rdgBiasUpdates(double* biasParams, double* biasGrads, float eta, int N)
 }
 
 // We are putting a hard limit on N here, notice its capped at 256!
-void n3rdgWrapGrad(double* unwrapped, double* grads, int L, int kW, int oT)
+void n3rdgWrapGrad(double* unwrapped, double* grads, int kL, int kW, int oT)
 {
-    int blocksPerGrid = L;
+    int blocksPerGrid = kL;
     devWrapGrad<<<blocksPerGrid, 256>>>(unwrapped, grads, kW, oT);
 }
 
 
-void n3rdgUnwrapInput(double *x, double* unwrapped, int L, int kW, int iT)
+void n3rdgUnwrapInput(double *x, double* unwrapped, int kL, int kW, int iT)
 {
-    int blocksPerGrid = L;
+    int blocksPerGrid = kL;
     devUnwrapInput<<<blocksPerGrid, 256>>>(x, unwrapped, kW, iT);
 }
 
-void n3rdgUnwrapInput2(double* x, double* unwrapped, int L, int kH, int kW, int iH, int iW)
+void n3rdgUnwrapInput2(double* x, double* unwrapped, int kL, int kH, int kW, int iH, int iW)
 {
 
     dim3 threadsPerBlock;
@@ -363,7 +389,20 @@ void n3rdgUnwrapInput2(double* x, double* unwrapped, int L, int kH, int kW, int 
     blocksPerGrid.x = (iH + threadsPerBlock.x - 1) / threadsPerBlock.x;
     blocksPerGrid.y = (iW + threadsPerBlock.y - 1) / threadsPerBlock.y;
 
-    devUnwrapInput2<<<blocksPerGrid, threadsPerBlock>>>(x, unwrapped, L, kH, kW, iH, iW);
+    devUnwrapInput2<<<blocksPerGrid, threadsPerBlock>>>(x, unwrapped, kL, kH, kW, iH, iW);
+}
+
+
+void n3rdgWrapGrad2(double *unwrapped, double* grads, const int kL, int kH, int kW, int iH, int iW)
+{
+    dim3 threadsPerBlock;
+    threadsPerBlock.x = 16;
+    threadsPerBlock.y = 16;
+    dim3 blocksPerGrid;
+
+    blocksPerGrid.x = (iH + threadsPerBlock.x - 1) / threadsPerBlock.x;
+    blocksPerGrid.y = (iW + threadsPerBlock.y - 1) / threadsPerBlock.y;
+    devWrapGrad2<<<blocksPerGrid, threadsPerBlock>>>(unwrapped, grads, kL, kH, kW, iH, iW);
 }
 
 // We are putting a hard limit on N here, notice its capped at 256!
