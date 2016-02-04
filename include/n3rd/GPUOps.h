@@ -20,5 +20,7 @@ void n3rdgWrapGrad2(double *unwrapped, double* grads, const int kL, int kH, int 
 void n3rdgUnwrapInput(double *x, double* unwrapped, int kL, int kW, int iT);
 void n3rdgUnwrapInput2(double* x, double* unwrapped, int kL, int kH, int kW, int iH, int iW);
 void n3rdgMaxPoolingForward(double* outputMx, int* originMx, double* inputMx, int height, int width, int dh, int dw);
+void n3rdgAddBias2(double* x, double *bias, int nK, int oH, int oW);
+void n3rdgBiasGrad2(double* biasGrad, double *grad, int nK, int oH, int oW);
 
 #endif

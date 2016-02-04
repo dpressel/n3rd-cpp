@@ -196,6 +196,32 @@ __global__ void devMaxPooling(double *odata, int* origin, double* idata, int hei
 
 }
 
+__global__ void devAddBias2(double* x, double *bias, int nK, int oH, int oW)
+{
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    int j = blockIdx.y * blockDim.y + threadIdx.y;
+    if (j < oW && i < oH)
+    {
+        for (int l = 0; l < nK; ++l)
+        {
+           x[(l * oH + i) * oW + j] = bias[l];
+        }
+    }
+}
+
+__global__ void devGradBias2(double* biasGrad, double* grad, int nK, int oH, int oW)
+{
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    int j = blockIdx.y * blockDim.y + threadIdx.y;
+    if (j < oW && i < oH)
+    {
+        for (int l = 0; l < nK; ++l)
+        {
+            biasGrad[l] += grad[(l * oH + i) * oW + j];
+        }
+    }
+}
+
 __global__ void devUnwrapInput2(double *x, double* unwrappedInput, const int kL, int kH, int kW, int iH, int iW)
 {
 
@@ -364,6 +390,7 @@ void n3rdgBiasUpdates(double* biasParams, double* biasGrads, float eta, int N)
     cudaDeviceSynchronize();
 }
 
+
 // We are putting a hard limit on N here, notice its capped at 256!
 void n3rdgWrapGrad(double* unwrapped, double* grads, int kL, int kW, int oT)
 {
@@ -376,6 +403,36 @@ void n3rdgUnwrapInput(double *x, double* unwrapped, int kL, int kW, int iT)
 {
     int blocksPerGrid = kL;
     devUnwrapInput<<<blocksPerGrid, 256>>>(x, unwrapped, kW, iT);
+}
+
+
+void n3rdgAddBias2(double* x, double *bias, int nK, int oH, int oW)
+{
+    dim3 threadsPerBlock;
+    threadsPerBlock.x = 16;
+    threadsPerBlock.y = 16;
+    dim3 blocksPerGrid;
+
+    blocksPerGrid.x = (oH + threadsPerBlock.x - 1) / threadsPerBlock.x;
+    blocksPerGrid.y = (oW + threadsPerBlock.y - 1) / threadsPerBlock.y;
+
+    devAddBias2<<<blocksPerGrid, threadsPerBlock>>>(x, bias, nK, oH, oW);
+
+}
+
+
+void n3rdgBiasGrad2(double* biasGrad, double *grad, int nK, int oH, int oW)
+{
+    dim3 threadsPerBlock;
+    threadsPerBlock.x = 16;
+    threadsPerBlock.y = 16;
+    dim3 blocksPerGrid;
+
+    blocksPerGrid.x = (oH + threadsPerBlock.x - 1) / threadsPerBlock.x;
+    blocksPerGrid.y = (oW + threadsPerBlock.y - 1) / threadsPerBlock.y;
+
+    devGradBias2<<<blocksPerGrid, threadsPerBlock>>>(biasGrad, grad, nK, oH, oW);
+
 }
 
 void n3rdgUnwrapInput2(double* x, double* unwrapped, int kL, int kH, int kW, int iH, int iW)

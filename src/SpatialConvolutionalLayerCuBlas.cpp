@@ -136,18 +136,8 @@ sgdtk::TensorI& SpatialConvolutionalLayerCuBlas::forward(const sgdtk::TensorI& z
 
     const int oH = iH - kH + 1;
     const int oW = iW - kW + 1;
-    output.constant(0.);
-/*    for (int l = 0; l < nK; ++l)
-    {
-        for (int i = 0; i < oH; ++i)
-        {
-            for (int j = 0; j < oW; ++j)
-            {
-                output[(l * oH + i) * oW + j] = biases[l];
-            }
-        }
-    }
-*/
+
+    n3rdgAddBias2(output.d, biases.d, nK, oH, oW);
 
     double alpha = 1.0;
     double beta = 1.0;
@@ -193,23 +183,9 @@ sgdtk::TensorI& SpatialConvolutionalLayerCuBlas::backward(sgdtk::TensorI& chainG
 
 
     TRY_CUBLAS(cublasDgemm_v2(sgdtk::Globals::gBlasHandle, CUBLAS_OP_T, CUBLAS_OP_N, m, n, k, &alpha, dUnwrappedInput.d, k, chainGradT.d, k, &beta, gradsW.d, m));
-/* TODO
-    for (int l = 0; l < nK; ++l)
-    {
-        for (int i = 0; i < oH; ++i)
-        {
-            for (int j = 0; j < oW; ++j)
-            {
-                biasGrads[l] += chainGradT[(l * oH + i) * oW + j];
-            }
-        }
 
-    }
-*/
-    ///wrapGrad(dUnwrappedGradInput);
-
+    n3rdgBiasGrad2(biasGrads.d, chainGradT.d, nK, oH, oW);
     n3rdgWrapGrad2(dUnwrappedGradInput.d, grads.d, kL, kH, kW, iH, iW);
-    //n3rdgWrapGrad(dUnwrappedGradInput.d, grads.d, nK, kW, oT);
 
     return grads;
 
