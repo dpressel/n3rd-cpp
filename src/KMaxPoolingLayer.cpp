@@ -15,16 +15,15 @@ sgdtk::TensorI& KMaxPoolingLayer::forward(const sgdtk::TensorI& z)
     numFrames = z.size() / embeddingSz / featureMapSz;
     const int sz = featureMapSz * k * embeddingSz;
     grads.resize({featureMapSz, embeddingSz, numFrames});
-    grads.constant(0.);
+    grads.zeros();
 
     // If the numFrames is less than k, we need to make sure these are zero'd
-    output.constant(0.);
     originDims = {featureMapSz, embeddingSz, k};
 
     for (int i = 0; i < sz; ++i)
     {
         output[i] = 0.;
-        origin[i] = -100;
+        origin[i] = DS_MIN;
     }
 
     //}
@@ -67,7 +66,7 @@ sgdtk::TensorI& KMaxPoolingLayer::forward(const sgdtk::TensorI& z)
 sgdtk::TensorI& KMaxPoolingLayer::backward(sgdtk::TensorI& chainGrad, double y)
 {
     const sgdtk::Tensor& chainGradT = (const sgdtk::Tensor&)chainGrad;
-    grads.constant(0.);
+    grads.zeros();
     for (int l = 0, lbase = 0; l < featureMapSz; ++l, lbase += embeddingSz)
     {
         for (int j = 0; j < embeddingSz; ++j)

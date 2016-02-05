@@ -19,7 +19,7 @@ sgdtk::TensorI& MaxPoolingLayer::forward(const sgdtk::TensorI& z)
 
     for (int i = 0; i < sz; ++i)
     {
-        output[i] = -100;
+        output[i] = DS_MIN;
         origin[i] = 0;
     }
 
@@ -55,7 +55,7 @@ sgdtk::TensorI& MaxPoolingLayer::forward(const sgdtk::TensorI& z)
 sgdtk::TensorI& MaxPoolingLayer::backward(sgdtk::TensorI& chainGrad, double y)
 {
     const sgdtk::Tensor& chainGradT = (const sgdtk::Tensor&)chainGrad;
-    grads.constant(0.);
+    grads.zeros();
 
     const int kL = inputDims[0];
     const int iH = inputDims[1];

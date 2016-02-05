@@ -92,7 +92,7 @@ sgdtk::TensorI& TemporalConvolutionalLayerBlas::forward(const sgdtk::TensorI& z)
     numFrames = z.size() / kL;
     input = zT;
     grads.resize({kL, 1, numFrames});
-    grads.constant(0.);
+    grads.zeros();
     const int oT = numFrames - kW + 1;
     output.resize({nK, 1, oT});
 

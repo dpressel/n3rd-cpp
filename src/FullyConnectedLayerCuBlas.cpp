@@ -67,7 +67,7 @@ sgdtk::TensorI& FullyConnectedLayerCuBlas::forward(const sgdtk::TensorI& input)
     dInput = &((const sgdtk::CudaTensor&)input);
 
     double one = 1.0;
-    output.constant(0);
+    output.zeros();
     /// TODO: avoid constant() call above
     TRY_CUBLAS(cublasDgemv_v2(sgdtk::Globals::gBlasHandle, CUBLAS_OP_N, outputLength, inputLength, &one, weights.d, outputLength, dInput->d, 1, &one, output.d, 1));
 
@@ -83,14 +83,14 @@ sgdtk::TensorI& FullyConnectedLayerCuBlas::backward(sgdtk::TensorI& chainGrad, d
 
     const sgdtk::CudaTensor& dChainGrad = (const sgdtk::CudaTensor&)chainGrad;
 
-    grads.constant(0.);
+    grads.zeros();
 
     TRY_CUBLAS(cublasDgemv_v2(sgdtk::Globals::gBlasHandle, CUBLAS_OP_T, outputLength, inputLength, &one, weights.d, outputLength, dChainGrad.d, 1, &one, grads.d, 1));
 
-    gradsW.constant(0.);
+    gradsW.zeros();
     TRY_CUBLAS(cublasDger_v2(sgdtk::Globals::gBlasHandle, outputLength, inputLength, &one, dChainGrad.d, 1, dInput->d, 1, gradsW.d, outputLength));
 
-    biasGrads.constant(0);
+    biasGrads.zeros();
     biasGrads.add(dChainGrad);
 
     return grads;

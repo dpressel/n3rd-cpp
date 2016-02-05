@@ -51,6 +51,11 @@ namespace sgdtk
 
         void scale(double scalar);
 
+        void clear()
+        {
+            constant(0.0);
+        }
+
         void resize(const std::vector<int>& dimensions)
         {
             dims = dimensions;
@@ -87,6 +92,11 @@ namespace sgdtk
             {
                 throw new sgdtk::Exception("Invalid shape!");
             }
+        }
+
+        void zeros()
+        {
+            constant(0.0);
         }
 
         void constant(Real x)

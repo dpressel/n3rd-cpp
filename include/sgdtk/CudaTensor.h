@@ -33,6 +33,22 @@ namespace sgdtk
                 cudaFree(d);
             }
         }
+
+        void zeros()
+        {
+            TRY_CUDA(cudaMemset(d, 0, sizeof(Real) * size()));
+        }
+
+        void constant(T x)
+        {
+            if (x == 0.0)
+            {
+                zeros();
+                return;
+            }
+            std::vector<T> copy(size(), x);
+            fromCPU(copy, false);
+        }
         void resize(int length)
         {
             sz = length;
@@ -212,9 +228,22 @@ namespace sgdtk
             }
         }
 
+        void zeros()
+        {
+            TRY_CUDA(cudaMemset(d, 0, sizeof(Real) * size()));
+        }
+
+        // Inefficient except for 0!
         void constant(Real x)
         {
-            TRY_CUDA(cudaMemset(d, (int)x, sizeof(Real) * size()));
+            if (x == 0.0)
+            {
+                zeros();
+                return;
+            }
+            Tensor copy(dims);
+            copy.constant(x);
+            fromCPU(copy, false);
         }
         //void reset(const std::vector<Real>& x, const std::vector<int>& dimensions)
         //{

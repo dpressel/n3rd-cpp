@@ -33,7 +33,7 @@ namespace n3rd
     public:
 
 
-
+        enum {DS_MIN = -1000000 };
 
         /**
          * Default Ctor, used prior to rehydrating model from file

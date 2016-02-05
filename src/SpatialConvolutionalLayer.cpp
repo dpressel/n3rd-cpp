@@ -93,7 +93,7 @@ sgdtk::TensorI& SpatialConvolutionalLayer::backward(sgdtk::TensorI& chainGrad, d
     transposeWeight4D(weights, tWeights);
 
     // This should NOT be required
-    grads.constant(0.);
+    grads.zeros();
     // This is actually what is failing.  Why?  Probably a bug in transpose weight 4D?
     FilterOps::conv2(zpChainGradCube, tWeights, {}, grads);
 

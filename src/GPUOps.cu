@@ -146,51 +146,60 @@ __global__ void devBiasUpdates(double* biasParams, double* biasGrads, float eta,
 
 }
 
-__global__ void devMaxPoolingBackward(double* odata, int* origin, double* idata, int height, int width, int dh, int dw) {
 
-    int oi = blockDim.x * blockIdx.x + threadIdx.x;
-    int oj = blockDim.y * blockIdx.y + threadIdx.y;
-    int oW = width / dw;
-    ///double mx0 = odata[oi * oW + oj];
-
-    for (int i = 0; i < dh; ++i)
-    {
-        for (int j = 0; j < dw; ++j)
-        {
-            int ii = blockDim.x * blockIdx.x + threadIdx.x * dh + i;
-            int ij = blockDim.y * blockIdx.y + threadIdx.y * dw + j;
-            int idx = ii * width + ij;
-            idata[idx] = origin[oi * oW + oj] == idx ? odata[oi * oW + oj]: 0;
-        }
-    }
-}
-
-__global__ void devMaxPooling(double *odata, int* origin, double* idata, int height, int width, int dh, int dw)
+// Grad should be zerod out!
+__global__ void devMaxPooling2Backward(double* grad, int* origin, double* chainGrad, int kL, int iH, int iW, int oH, int oW, int dh, int dw)
 {
 
     int oi = blockDim.x * blockIdx.x + threadIdx.x;
     int oj = blockDim.y * blockIdx.y + threadIdx.y;
-    int oW = width / dw;
-    //int oH = height / dh;
 
-    for (int i = 0; i < dh; ++i)
+    if (oj < oW && oi < oH)
     {
-        for (int j = 0; j < dw; ++j)
+        for (int l = 0; l < kL; ++l)
         {
-            double mx0 = odata[oi * oW + oj];
-            int ii = blockDim.x * blockIdx.x + threadIdx.x * dh + i;
-            int ij = blockDim.y * blockIdx.y + threadIdx.y * dw + j;
-            if (ii < height && ij < width)
-            {
-                int idx = ii * width + ij;
 
-                double curr = idata[idx];
-                if (curr > mx0)
+            int outAddr = (l * oH + oi) * oW + oj;
+            int inAddr = origin[outAddr];
+            grad[inAddr] = chainGrad[outAddr];
+        }
+    }
+}
+
+__global__ void devMaxPooling2(double *idata, int* origin, double* odata, int kL, int iH, int iW, int oH, int oW, int dh, int dw)
+{
+
+    int oi = blockDim.x * blockIdx.x + threadIdx.x;
+    int oj = blockDim.y * blockIdx.y + threadIdx.y;
+
+    int iiStart = min(oi * dh, iH);
+    int iiEnd = min((oi + 1) * dh, iH);
+    int ijStart = min(oj * dw, iW);
+    int ijEnd = min((oj + 1) * dw, iW);
+
+    if (oj < oW && oi < oH)
+    {
+        for (int l = 0; l < kL; ++l)
+        {
+            double mx = -1000000;
+            double imx = 0;
+            int outAddr = (l * oH + oi) * oW + oj;
+            for (int ii = iiStart; ii < iiEnd; ++ii)
+            {
+                for (int ij = ijStart; ij < ijEnd; ++ij)
                 {
-                    odata[oi * oW + oj] = curr;
-                    origin[oi * oW + oj] = idx;
+                    int inAddr = (l * iH + ii) * iW + ij;
+                    double zi = idata[inAddr];
+
+                    if (mx < zi)
+                    {
+                        mx = zi;
+                        imx = inAddr;
+                    }
                 }
             }
+            odata[outAddr] = mx;
+            origin[outAddr] = imx;
         }
     }
 
@@ -359,17 +368,6 @@ void n3rdgTranspose(double *outputMx, double* inputMx, int height, int width)
     devTranspose<<<grid, threads>>>(outputMx, inputMx, height, width);
 }
 
-void n3rdgMaxPoolingForward(double* outputMx, int* originMx, double* inputMx, int height, int width, int dh, int dw)
-{
-    int oW = width / dw;
-    int oH = height / dh;
-
-    // Check if a thread is outside valid range
-    dim3 grid((int)ceil(oW/(double)TILE_DIM), (int)ceil(oH/(double)TILE_DIM));
-    dim3 threads(TILE_DIM,TILE_DIM);
-    devMaxPooling<<<grid, threads>>>(outputMx, originMx, inputMx, height, width, dh, dw);
-}
-
 void n3rdgAdagradWeightUpdates(double *weights, double *weightGrads, double *gg, float eta, float lambda, int N)
 {
 
@@ -396,6 +394,7 @@ void n3rdgWrapGrad(double* unwrapped, double* grads, int kL, int kW, int oT)
 {
     int blocksPerGrid = kL;
     devWrapGrad<<<blocksPerGrid, 256>>>(unwrapped, grads, kW, oT);
+    cudaDeviceSynchronize();
 }
 
 
@@ -403,6 +402,7 @@ void n3rdgUnwrapInput(double *x, double* unwrapped, int kL, int kW, int iT)
 {
     int blocksPerGrid = kL;
     devUnwrapInput<<<blocksPerGrid, 256>>>(x, unwrapped, kW, iT);
+    cudaDeviceSynchronize();
 }
 
 
@@ -417,7 +417,7 @@ void n3rdgAddBias2(double* x, double *bias, int nK, int oH, int oW)
     blocksPerGrid.y = (oW + threadsPerBlock.y - 1) / threadsPerBlock.y;
 
     devAddBias2<<<blocksPerGrid, threadsPerBlock>>>(x, bias, nK, oH, oW);
-
+    cudaDeviceSynchronize();
 }
 
 
@@ -432,8 +432,10 @@ void n3rdgBiasGrad2(double* biasGrad, double *grad, int nK, int oH, int oW)
     blocksPerGrid.y = (oW + threadsPerBlock.y - 1) / threadsPerBlock.y;
 
     devGradBias2<<<blocksPerGrid, threadsPerBlock>>>(biasGrad, grad, nK, oH, oW);
-
+    cudaDeviceSynchronize();
 }
+
+
 
 void n3rdgUnwrapInput2(double* x, double* unwrapped, int kL, int kH, int kW, int iH, int iW)
 {
@@ -447,6 +449,7 @@ void n3rdgUnwrapInput2(double* x, double* unwrapped, int kL, int kH, int kW, int
     blocksPerGrid.y = (iW + threadsPerBlock.y - 1) / threadsPerBlock.y;
 
     devUnwrapInput2<<<blocksPerGrid, threadsPerBlock>>>(x, unwrapped, kL, kH, kW, iH, iW);
+    cudaDeviceSynchronize();
 }
 
 
@@ -460,6 +463,38 @@ void n3rdgWrapGrad2(double *unwrapped, double* grads, const int kL, int kH, int 
     blocksPerGrid.x = (iH + threadsPerBlock.x - 1) / threadsPerBlock.x;
     blocksPerGrid.y = (iW + threadsPerBlock.y - 1) / threadsPerBlock.y;
     devWrapGrad2<<<blocksPerGrid, threadsPerBlock>>>(unwrapped, grads, kL, kH, kW, iH, iW);
+    cudaDeviceSynchronize();
+}
+
+
+// We are putting a hard limit on N here, notice its capped at 256!
+void n3rdgMaxPooling2Forward(double* dX, int* dOrigin, double* dOutput, int kL, int iH, int iW, int oH, int oW, int dh, int dw)
+{
+    dim3 threadsPerBlock;
+    threadsPerBlock.x = 16;
+    threadsPerBlock.y = 16;
+    dim3 blocksPerGrid;
+
+    blocksPerGrid.x = (oH + threadsPerBlock.x - 1) / threadsPerBlock.x;
+    blocksPerGrid.y = (oW + threadsPerBlock.y - 1) / threadsPerBlock.y;
+
+    devMaxPooling2<<<blocksPerGrid, threadsPerBlock>>>(dX, dOrigin, dOutput, kL, iH, iW, oH, oW, dh, dw);
+    cudaDeviceSynchronize();
+}
+
+
+void n3rdgMaxPooling2Backward(double* dGrad, int* dOrigin, double* dChainGrad, int kL, int iH, int iW, int oH, int oW, int dh, int dw)
+{
+
+    dim3 threadsPerBlock;
+    threadsPerBlock.x = 16;
+    threadsPerBlock.y = 16;
+    dim3 blocksPerGrid;
+
+    blocksPerGrid.x = (oH + threadsPerBlock.x - 1) / threadsPerBlock.x;
+    blocksPerGrid.y = (oW + threadsPerBlock.y - 1) / threadsPerBlock.y;
+
+    devMaxPooling2Backward<<<blocksPerGrid, threadsPerBlock>>>(dGrad, dOrigin, dChainGrad, kL, iH, iW, oH, oW, dh, dw);
 }
 
 // We are putting a hard limit on N here, notice its capped at 256!

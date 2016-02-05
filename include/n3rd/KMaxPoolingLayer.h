@@ -39,7 +39,7 @@ namespace n3rd
         std::vector<int> originDims;
     public:
 
-
+        enum {DS_MIN = -1000000 };
 
 
         /**

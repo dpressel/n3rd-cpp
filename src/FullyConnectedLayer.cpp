@@ -69,7 +69,7 @@ sgdtk::TensorI& FullyConnectedLayer::backward(sgdtk::TensorI& chainGrad, double 
     int zLength = z.size();
     int howLong = std::min(inputLength, zLength);
 
-    grads.constant(0.);
+    grads.zeros();
     for (int i = 0, ibase = 0; i < outputLength; ++i, ibase += inputLength)
     {
         double g = chainGradT[i];

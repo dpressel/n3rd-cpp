@@ -53,7 +53,7 @@ FullyConnectedLayerBlas::FullyConnectedLayerBlas(int outputLength, int inputLeng
 sgdtk::TensorI& FullyConnectedLayerBlas::forward(const sgdtk::TensorI& input)
 {
 
-    output.constant(0.);
+    output.zeros();
     const sgdtk::Tensor& inputT = (const sgdtk::Tensor&)input;
 
     for (int i = 0, sz = input.size(); i < sz; ++i)
@@ -70,7 +70,7 @@ sgdtk::TensorI& FullyConnectedLayerBlas::forward(const sgdtk::TensorI& input)
 sgdtk::TensorI& FullyConnectedLayerBlas::backward(sgdtk::TensorI& chainGrad, double y)
 {
 
-    grads.constant(0.);
+    grads.zeros();
 
     const sgdtk::Tensor& chainGradT = (const sgdtk::Tensor&)chainGrad;
     cblas_dgemv(CblasColMajor, CblasTrans, outputLength, inputLength, 1.0, &weights.d[0], outputLength,

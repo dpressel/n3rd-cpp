@@ -82,7 +82,7 @@ sgdtk::TensorI& TemporalConvolutionalLayer::backward(sgdtk::TensorI& chainGrad, 
 
     int zpFrameSize = numFrames + kW - 1;
     int zp = zpFrameSize - convOutputSz;
-    grads.constant(0.0);
+    grads.zeros();
     sgdtk::Tensor zpChainGrad;
 
     embed(chainGradT, 0, 0, zp, zpChainGrad);

@@ -28,9 +28,10 @@ namespace n3rd
         std::vector<int> inputDims;
         int dh;
         int dw;
+
     public:
 
-
+        enum {DS_MIN = -1000000 };
 
 
         /**

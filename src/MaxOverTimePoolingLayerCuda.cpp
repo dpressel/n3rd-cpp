@@ -34,7 +34,7 @@ sgdtk::TensorI& MaxOverTimePoolingLayerCuda::forward(const sgdtk::TensorI& z)
 sgdtk::TensorI& MaxOverTimePoolingLayerCuda::backward(sgdtk::TensorI& chainGrad, double y)
 {
     const sgdtk::CudaTensor& chainGradT = (const sgdtk::CudaTensor&)chainGrad;
-    grads.constant(0.);
+    grads.zeros();
 
 ///    for (int l = 0; l < featureMapSz; ++l)
 ///    {

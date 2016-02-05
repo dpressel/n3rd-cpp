@@ -130,7 +130,7 @@ void SpatialConvolutionalLayerCuBlas::wrapGrad(sgdtk::CudaTensor& dUnwrapped)
 sgdtk::TensorI& SpatialConvolutionalLayerCuBlas::forward(const sgdtk::TensorI& z)
 {
     const sgdtk::CudaTensor& input = (const sgdtk::CudaTensor&)z;
-    grads.constant(0.);
+    grads.zeros();
 
     n3rdgUnwrapInput2(input.d, dUnwrappedInput.d, kL, kH, kW, iH, iW);
 

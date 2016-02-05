@@ -39,7 +39,7 @@ sgdtk::TensorI& TemporalConvolutionalLayerCuBlas::forward(const sgdtk::TensorI& 
 
     numFrames = z.size() / kL;
     grads.resize({kL, 1, numFrames});
-    grads.constant(0.);
+    grads.zeros();
     const int oT = numFrames - kW + 1;
     output.resize({nK, 1, oT});
     dUnwrappedInput.resize({oT, kW * kL});

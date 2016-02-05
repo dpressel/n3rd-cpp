@@ -51,7 +51,7 @@ sgdtk::TensorI& DropoutLayer::backward(sgdtk::TensorI& chainGrad, double y)
     int sz = chainGradT.size();
     grads.resize(chainGradT.dims);
 
-    grads.constant(0.);
+    grads.zeros();
 
     for (int i = 0; i < sz; ++i)
     {

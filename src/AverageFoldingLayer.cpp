@@ -49,7 +49,7 @@ sgdtk::TensorI& AverageFoldingLayer::backward(sgdtk::TensorI& chainGrad, double 
     const sgdtk::Tensor& chainGradT = (const sgdtk::Tensor&)chainGrad;
     auto div = 1.0 / k;
     int outEmbeddingSz = embeddingSz / k;
-    grads.constant(0.);
+    grads.zeros();
 
     for (int l = 0, lbase = 0, libase = 0; l < featureMapSz; ++l, lbase += outEmbeddingSz, libase += embeddingSz)
     {

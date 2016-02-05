@@ -166,7 +166,7 @@ void testWrapGrads()
 
     CudaTensor dUnwrapped(unwrapped);
     CudaTensor dGrads(grads.dims);
-    dGrads.constant(0);
+    dGrads.zeros();
     //assertEquals(grads.dims[2], unwrapped.dims[0]);
     //assertEquals(grads.dims[2] + 3 - 1, grads.dims[2]);
     n3rdgWrapGrad(dUnwrapped.d, dGrads.d, 2, 3, unwrapped.dims[0]);

@@ -115,6 +115,8 @@ set(SOURCE_FILES
         include/n3rd/FFTOps.h
         src/FFTOps.cpp
         include/n3rd/TanhLayerCuda.h
+        include/n3rd/MaxPoolingLayerCuda.h
+        src/MaxPoolingLayerCuda.cpp
         include/n3rd/MaxOverTimePoolingLayerCuda.h
         src/MaxOverTimePoolingLayerCuda.cpp
         src/WeightHacks.cpp include/n3rd/DropoutLayer.h src/DropoutLayer.cpp
@@ -140,6 +142,7 @@ add_executable(TestFCBlas TestFCBlas.cpp)
 add_executable(TestFCCuBlas TestFCCuBlas.cpp)
 add_executable(TestConv TestConv.cpp)
 add_executable(TestMaxOverTime TestMaxOverTime.cpp)
+add_executable(TestMax2D TestMax2D.cpp)
 add_executable(TestConvBlas TestConvBlas.cpp)
 add_executable(TestGPU TestGPU.cpp)
 add_executable(LeNetish LeNetish.cpp)
@@ -158,6 +161,7 @@ target_link_libraries (TestFCCuBlas n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 
 target_link_libraries (TestConv n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m n3rdg)
 target_link_libraries (TestConvBlas n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m n3rdg)
 target_link_libraries (TestMaxOverTime n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m n3rdg)
+target_link_libraries (TestMax2D n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m n3rdg)
 #target_link_libraries (TestConvBlas sgdtk libopenblas.dll)
 target_link_libraries(TrainNBoW n3rd ${CUDA_EXTRA_LIBRARIES} openblas fftw3 m n3rdg)
 #target_link_libraries(Train -L. sgdtk ${BLAS_blas_library})

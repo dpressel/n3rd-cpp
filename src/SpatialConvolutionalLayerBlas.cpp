@@ -117,7 +117,7 @@ void SpatialConvolutionalLayerBlas::wrapGrad(sgdtk::Tensor& unwrapped)
 sgdtk::TensorI& SpatialConvolutionalLayerBlas::forward(const sgdtk::TensorI& z)
 {
     const sgdtk::Tensor& input = (const sgdtk::Tensor&)z;
-    grads.constant(0.);
+    grads.zeros();
 
     unwrapInput(input);
 
